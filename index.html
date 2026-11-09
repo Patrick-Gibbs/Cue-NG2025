@@ -245,53 +245,55 @@
 <!-- ============ From total to genetic liability ============ -->
 <section class="slide" id="to-genetic">
   <h1>Extension to multiple traits (b) (visualisation)</h1>
-  <p class="sub">Genetic and total liability are jointly normal, so once total liabilities are fixed, ω<sub>T</sub> is normal with a mean that is a weighted sum of them. The diagnoses only give a range for each ε, so the LTPI score averages this over that range.</p>
+  <p class="sub">Each dot is a simulated person: total liability ε<sub>T</sub> across, its genetic part ω<sub>T</sub> up (the rest is environment). Diagnoses only see total liability. The score is the average ω<sub>T</sub> of the people who fit the whole record.</p>
   <div class="stage">
     <div class="ghk">
       <div class="plotcol">
-        <svg id="wPlane" viewBox="0 0 470 480" role="img" aria-label="Genetic liability for the target against total liability for the other trait, with the spread of genetic liability for this person drawn as a slice"></svg>
+        <svg id="wPlane" viewBox="0 0 470 470" role="img" aria-label="Simulated people: total against genetic liability for the target, coloured by whether they fit the record"></svg>
         <div class="leg">
-          <span><span class="sw" style="border-color:#a8a69e"></span>Population</span>
-          <span><span class="sw" style="border-color:#888780;border-top-style:dashed"></span>Knowing ε₂ only</span>
-          <span><span class="sw" style="border-color:#534ab7"></span>Knowing ε₂ and ε<sub>T</sub></span>
-          <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Spread of ω<sub>T</sub> for this person</span>
+          <span><span class="sq" style="background:#7f77dd"></span>Fit the whole record</span>
+          <span id="wLegRej"><span class="sq" style="background:#e3b7a5"></span>Fit the target, removed by the other trait</span>
+          <span><span class="sq" style="background:#d3d1c7"></span>Don't fit</span>
         </div>
-        <p id="wNote" style="font-size:clamp(12px,1vw,15px);color:var(--muted);text-align:center;margin-top:4px"></p>
+        <p id="wNote" style="font-size:clamp(12px,1vw,15px);color:var(--muted);text-align:center;margin-top:2px"></p>
       </div>
       <div class="panel">
         <div class="line">
-          <span class="k">What we know</span>
-          <span class="seg" data-s="w" data-k="know"><button data-v="0">ε₂ only</button><button data-v="1">ε₂ and ε<sub>T</sub></button></span>
+          <span class="k">This person</span>
+          <span>Target</span><span class="seg" data-s="w" data-k="zT"><button data-v="0">Control</button><button data-v="1">Case</button></span>
+          <span>Other trait</span><span class="seg" data-s="w" data-k="z2"><button data-v="2">Not used</button><button data-v="0">Control</button><button data-v="1">Case</button></span>
         </div>
         <div class="sliders">
-          <label class="sl"><span>ε₂, other</span> <b id="wE2v"></b><input type="range" data-s="w" data-k="e2" min="-3" max="3" step="0.05" value="1.5"><small>Total liability</small></label>
-          <label class="sl" id="wEtLab"><span>ε<sub>T</sub>, target</span> <b id="wEtv"></b><input type="range" data-s="w" data-k="eT" min="-3" max="3" step="0.05" value="1"><small>Total liability</small></label>
+          <label class="sl th"><span>θ, target</span> <b id="wT1v"></b><input type="range" data-s="w" data-k="th1" min="-1" max="2.5" step="0.05" value="1.3"><small id="wK1v"></small></label>
+          <label class="sl th"><span>θ₂, other</span> <b id="wT2v"></b><input type="range" data-s="w" data-k="th2" min="-1" max="2.5" step="0.05" value="1"><small id="wK2v"></small></label>
           <label class="sl"><span>h²</span> <b id="wH2v"></b><input type="range" data-s="w" data-k="h2" min="0.1" max="0.9" step="0.05" value="0.5"><small>Heritability</small></label>
           <label class="sl"><span>r<sub>g</sub></span> <b id="wRgv"></b><input type="range" data-s="w" data-k="rg" min="-0.9" max="0.95" step="0.05" value="0.6"><small>Genetic corr.</small></label>
           <label class="sl"><span>r<sub>e</sub></span> <b id="wRev"></b><input type="range" data-s="w" data-k="re" min="-0.5" max="0.9" step="0.05" value="0.2"><small>Environmental corr.</small></label>
         </div>
         <div class="post big">
-          <h3>ω<sub>T</sub> for this person, given their total liabilities</h3>
-          <svg viewBox="0 0 480 215" role="img" aria-label="Prior and conditional distributions of genetic liability for the target">
+          <h3>ω<sub>T</sub> of the people who fit</h3>
+          <svg viewBox="0 0 480 215" role="img" aria-label="Histogram of genetic liability among the people who fit the record, with the exact posterior">
             <g id="wAxis"></g>
             <path id="wPriorF" fill="#b4b2a9" opacity="0.28"/>
-            <path id="wOnlyL" fill="none" stroke="#888780" stroke-width="1.8" stroke-dasharray="5 3"/>
-            <path id="wPostF" fill="#7f77dd" opacity="0.3"/>
-            <path id="wPostL" fill="none" stroke="#534ab7" stroke-width="2.2"/>
+            <path id="wOnlyL" fill="none" stroke="#c0623d" stroke-width="1.6"/>
+            <path id="wHistF" fill="#7f77dd" opacity="0.35"/>
+            <path id="wHistL" fill="none" stroke="#534ab7" stroke-width="1.6"/>
+            <path id="wExL" fill="none" stroke="#1f1e1c" stroke-width="1.4" stroke-dasharray="4 3"/>
             <line id="wMeanL" stroke="#534ab7" stroke-width="1.6"/>
             <text id="wMeanT" font-size="12" font-weight="600" fill="#534ab7" text-anchor="middle"></text>
             <text x="250" y="210" text-anchor="middle" font-size="12" fill="#6b6a65">ω<tspan baseline-shift="sub" font-size="9">T</tspan>, genetic liability for the target →</text>
           </svg>
           <div class="leg" style="justify-content:flex-start;margin:2px 0 4px">
-            <span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span>
-            <span id="wLegOnly"><span class="sw" style="border-color:#888780;border-top-style:dashed"></span>Knowing ε₂ only</span>
-            <span><span class="sq" style="background:#7f77dd;opacity:.6"></span><span id="wLegPost">Knowing ε₂ and ε<sub>T</sub></span></span>
+            <span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Everyone, N(0, h²)</span>
+            <span id="wLegOnly"><span class="sw" style="border-color:#c0623d"></span>Fit the target diagnosis only</span>
+            <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Fit the whole record</span>
+            <span><span class="sw" style="border-color:#1f1e1c;border-top-style:dashed"></span>Exact posterior</span>
           </div>
         </div>
         <div class="cards three">
-          <div class="card"><p>Weight on ε<sub>T</sub> (target)</p><b id="wA">–</b></div>
-          <div class="card"><p>Weight on ε₂ (other trait)</p><b id="wB">–</b></div>
-          <div class="card hi"><p>ω<sub>T</sub>: mean ± SD</p><b id="wM">–</b></div>
+          <div class="card"><p>Simulated people who fit</p><b id="wN">–</b></div>
+          <div class="card"><p>Their average ω<sub>T</sub></p><b id="wMC">–</b></div>
+          <div class="card hi"><p>Exact LTPI score</p><b id="wEx">–</b></div>
         </div>
       </div>
     </div>
@@ -1396,62 +1398,62 @@ function renderF() {
 }
 
 /* ================= Controls (both slides) ================= */
-/* From total to genetic liability: E[ω_T | ε] = Cov(ω_T, ε) (Ω+Σ)⁻¹ ε, residual variance h² − Cov (Ω+Σ)⁻¹ Covᵀ */
-const SW = { know: 1, e2: 1.5, eT: 1, h2: 0.5, rg: 0.6, re: 0.2 };
+/* Simulated people: each has genetic parts (ω_T, ω₂) and environmental parts (σ_T, σ₂); the record only sees ε = ω + σ */
+const SW = { zT: 1, z2: 2, th1: 1.3, th2: 1, h2: 0.5, rg: 0.6, re: 0.2 };
+const WN = 6000, WZ = (() => { const g = mulberry32(99), out = new Float64Array(WN * 4); for (let i = 0; i < WN * 4; i += 2) { const a = Math.sqrt(-2 * Math.log(1 - g())), b = 2 * Math.PI * g(); out[i] = a * Math.cos(b); out[i + 1] = a * Math.sin(b); } return out; })();
 $('wAxis').innerHTML = axisSvg();
 function renderW() {
-  const h2 = SW.h2, h = Math.sqrt(h2), cT2 = h2 * SW.rg, rho = h2 * SW.rg + (1 - h2) * SW.re, den = 1 - rho * rho;
-  const b1 = cT2, v1 = Math.max(1e-4, h2 - cT2 * cT2);
-  const a = (h2 - rho * cT2) / den, b = (cT2 - rho * h2) / den, v2 = Math.max(1e-4, h2 - (a * h2 + b * cT2));
-  const m1 = b1 * SW.e2, m2 = a * SW.eT + b * SW.e2, K = SW.know, m = K ? m2 : m1, s = Math.sqrt(K ? v2 : v1);
-  $('wE2v').textContent = fmt(SW.e2); $('wEtv').textContent = fmt(SW.eT); $('wH2v').textContent = h2.toFixed(2);
-  $('wRgv').textContent = fmt(SW.rg); $('wRev').textContent = fmt(SW.re);
-  $('wEtLab').style.opacity = K ? 1 : 0.35;
-  const GX0 = 50, GX1 = 430, GY0 = 40, GY1 = 420;
-  const WX = e => GX0 + (e + 3.5) / 7 * (GX1 - GX0), WY = w => GY1 - (w + 2.5) / 5 * (GY1 - GY0);
-  let g = `<defs><clipPath id="wClip"><rect x="${GX0}" y="${GY0}" width="${GX1 - GX0}" height="${GY1 - GY0}"/></clipPath></defs>`;
-  g += `<rect x="${GX0}" y="${GY0}" width="${GX1 - GX0}" height="${GY1 - GY0}" fill="#ffffff" stroke="#dedcd4"/>`;
+  const S = SW, h = Math.sqrt(S.h2), s = Math.sqrt(1 - S.h2), used = S.z2 !== 2;
+  $('wT1v').textContent = S.th1.toFixed(2); $('wT2v').textContent = S.th2.toFixed(2);
+  $('wK1v').textContent = 'Prev. ' + ((1 - Phi(S.th1)) * 100).toFixed(1) + '%'; $('wK2v').textContent = 'Prev. ' + ((1 - Phi(S.th2)) * 100).toFixed(1) + '%';
+  $('wH2v').textContent = S.h2.toFixed(2); $('wRgv').textContent = fmt(S.rg); $('wRev').textContent = fmt(S.re);
+  $('wT2v').parentElement.style.opacity = used ? 1 : 0.35;
+  const fitT = e => S.zT ? e > S.th1 : e < S.th1, fit2 = e => S.z2 === 1 ? e > S.th2 : e < S.th2;
+  const GX0 = 50, GX1 = 430, GY0 = 30, GY1 = 410;
+  const WX = e => GX0 + (Math.max(-3.5, Math.min(3.5, e)) + 3.5) / 7 * (GX1 - GX0), WY = w => GY1 - (Math.max(-2.5, Math.min(2.5, w)) + 2.5) / 5 * (GY1 - GY0);
+  let g = `<rect x="${GX0}" y="${GY0}" width="${GX1 - GX0}" height="${GY1 - GY0}" fill="#ffffff" stroke="#dedcd4"/>`;
+  const lo = S.zT ? S.th1 : -3.5, hi = S.zT ? 3.5 : S.th1;
+  g += `<rect x="${WX(lo)}" y="${GY0}" width="${WX(hi) - WX(lo)}" height="${GY1 - GY0}" fill="#1d9e75" opacity="0.08"/>`;
   for (let t = -2; t <= 2; t++) g += `<line x1="${GX0}" y1="${WY(t)}" x2="${GX1}" y2="${WY(t)}" stroke="#f0efe9"/><text x="${GX0 - 8}" y="${WY(t) + 4}" text-anchor="end" font-size="12" fill="#6b6a65">${t < 0 ? '−' + Math.abs(t) : t}</text>`;
   for (let t = -3; t <= 3; t++) g += `<text x="${WX(t)}" y="${GY1 + 18}" text-anchor="middle" font-size="12" fill="#6b6a65">${t < 0 ? '−' + Math.abs(t) : t}</text>`;
-  g += `<g clip-path="url(#wClip)">`;
-  /* population joint of (ε₂, ω_T): rings at 1 and 2 SD */
-  const c = h * SW.rg, sc = Math.sqrt(Math.max(0, 1 - c * c));
-  let d = '';
-  [1, 2].forEach(r => { for (let i = 0; i <= 72; i++) { const t = i / 72 * 2 * Math.PI, x = r * Math.cos(t), w = h * (c * r * Math.cos(t) + sc * r * Math.sin(t)); d += (i ? 'L' : 'M') + WX(x).toFixed(1) + ' ' + WY(w).toFixed(1); } });
-  g += `<path d="${d}" fill="none" stroke="#a8a69e" stroke-width="1.1"/>`;
-  g += `<line x1="${WX(-3.5)}" y1="${WY(-3.5 * b1)}" x2="${WX(3.5)}" y2="${WY(3.5 * b1)}" stroke="#888780" stroke-width="1.8" stroke-dasharray="6 4"/>`;
-  if (K) g += `<line x1="${WX(-3.5)}" y1="${WY(a * SW.eT - 3.5 * b)}" x2="${WX(3.5)}" y2="${WY(a * SW.eT + 3.5 * b)}" stroke="#534ab7" stroke-width="2.4"/>`;
-  /* the slice: distribution of ω_T for this person, drawn sideways at their ε₂ */
-  const x0 = WX(SW.e2), dir = SW.e2 > 0.6 ? -1 : 1, smin = Math.sqrt(K ? Math.min(v1, v2) : v1), k = Math.min(49, 120 * smin);
-  const slice = (mu, sd) => { let p = ''; for (let i = 0; i <= 160; i++) { const w = -2.5 + i * 5 / 160; p += (i ? 'L' : 'M') + (x0 + dir * k / sd * Math.exp(-0.5 * ((w - mu) / sd) ** 2)).toFixed(1) + ' ' + WY(w).toFixed(1); } return p; };
-  g += `<line x1="${x0}" y1="${GY0}" x2="${x0}" y2="${GY1}" stroke="#534ab7" stroke-width="1" stroke-dasharray="2 3"/>`;
-  if (K) g += `<path d="${slice(m1, Math.sqrt(v1))}" fill="none" stroke="#888780" stroke-width="1.6" stroke-dasharray="5 3"/>`;
-  const sp = slice(m, s);
-  g += `<path d="${sp}L${x0} ${WY(-2.5)}L${x0} ${WY(2.5)}Z" fill="#7f77dd" fill-opacity="0.35"/><path d="${sp}" fill="none" stroke="#534ab7" stroke-width="2"/>`;
-  g += `<circle cx="${x0}" cy="${WY(m)}" r="6" fill="#534ab7" stroke="#fff" stroke-width="2"/>`;
-  g += `</g>`;
-  g += `<text x="${x0}" y="${GY0 - 8}" text-anchor="middle" font-size="13" font-weight="600" fill="#534ab7">ε₂ = ${fmt(SW.e2)}</text>`;
-  g += `<text x="${(GX0 + GX1) / 2}" y="${GY1 + 42}" text-anchor="middle" font-size="13" fill="#6b6a65">ε₂, total liability for the other trait →</text>`;
-  g += `<text x="16" y="${(GY0 + GY1) / 2}" text-anchor="middle" font-size="13" fill="#6b6a65" transform="rotate(-90 16 ${(GY0 + GY1) / 2})">ω<tspan baseline-shift="sub" font-size="9">T</tspan>, genetic liability for the target →</text>`;
+  let dots0 = '', dots1 = '', dots2 = '';
+  const wT = [], wAll = [];
+  for (let i = 0; i < WN; i++) {
+    const z1 = WZ[4 * i], z2 = WZ[4 * i + 1], z3 = WZ[4 * i + 2], z4 = WZ[4 * i + 3];
+    const om = h * z1, om2 = h * (S.rg * z1 + Math.sqrt(1 - S.rg * S.rg) * z2), si = s * z3, si2 = s * (S.re * z3 + Math.sqrt(1 - S.re * S.re) * z4);
+    const e = om + si, e2 = om2 + si2, c = `cx="${WX(e).toFixed(1)}" cy="${WY(om).toFixed(1)}"`;
+    if (!fitT(e)) { dots0 += `<circle ${c} r="1.3"/>`; continue; }
+    wT.push(om);
+    if (!used || fit2(e2)) { wAll.push(om); dots2 += `<circle ${c} r="2.6"/>`; } else dots1 += `<circle ${c} r="2.2"/>`;
+  }
+  g += `<g fill="#c9c7bf" opacity="0.55">${dots0}</g><g fill="#e3b7a5" opacity="0.9">${dots1}</g><g fill="#7f77dd" opacity="0.85">${dots2}</g>`;
+  g += `<line x1="${WX(S.th1)}" y1="${GY0}" x2="${WX(S.th1)}" y2="${GY1}" stroke="#d85a30" stroke-width="1.6" stroke-dasharray="5 4"/><text x="${WX(S.th1)}" y="${GY1 + 36}" text-anchor="middle" font-size="13" font-weight="600" fill="#d85a30">θ</text>`;
+  const avg = a => a.reduce((t, v) => t + v, 0) / Math.max(1, a.length), mT = avg(wT), mA = avg(wAll);
+  if (used && wT.length) g += `<line x1="${GX0}" y1="${WY(mT)}" x2="${GX1}" y2="${WY(mT)}" stroke="#c0623d" stroke-width="1.6" stroke-dasharray="6 4"/><text x="${GX0 + 8}" y="${WY(mT) + (mA >= mT ? 16 : -7)}" text-anchor="start" font-size="13" font-weight="600" fill="#c0623d" stroke="#fff" stroke-width="4" paint-order="stroke">target only ${sgn(mT)}</text>`;
+  if (wAll.length) g += `<line x1="${GX0}" y1="${WY(mA)}" x2="${GX1}" y2="${WY(mA)}" stroke="#3c3489" stroke-width="2"/><text x="${GX0 + 8}" y="${WY(mA) + (used && mA < mT ? 16 : -7)}" text-anchor="start" font-size="13" font-weight="600" fill="#3c3489" stroke="#fff" stroke-width="4" paint-order="stroke">average ω ${sgn(mA)}</text>`;
+  g += `<text x="${(GX0 + GX1) / 2}" y="${GY1 + 56}" text-anchor="middle" font-size="13" fill="#6b6a65">ε<tspan baseline-shift="sub" font-size="9">T</tspan>, total liability for the target →</text>`;
+  g += `<text x="16" y="${(GY0 + GY1) / 2}" text-anchor="middle" font-size="13" fill="#6b6a65" transform="rotate(-90 16 ${(GY0 + GY1) / 2})">ω<tspan baseline-shift="sub" font-size="9">T</tspan>, genetic part of it →</text>`;
   $('wPlane').innerHTML = g;
-  /* right: the same distributions along the ω_T axis */
-  const prior = priorOn(h2), nd = (mu, v) => GRID.map(w => phi((w - mu) / Math.sqrt(v)) / Math.sqrt(v));
-  const d1 = nd(m1, v1), d2 = K ? nd(m2, v2) : d1, ymax = Math.max(...prior, ...d1, ...d2) * 1.05;
-  const pc = curve(prior, ymax), c1 = curve(d1, ymax), c2 = curve(d2, ymax);
-  $('wPriorF').setAttribute('d', pc.fill);
-  $('wOnlyL').setAttribute('d', K ? c1.line : '');
-  $('wPostF').setAttribute('d', c2.fill); $('wPostL').setAttribute('d', c2.line);
-  meanMarker('wMeanL', 'wMeanT', m);
-  $('wLegOnly').style.display = K ? '' : 'none';
-  $('wLegPost').innerHTML = K ? 'Knowing ε₂ and ε<sub>T</sub>' : 'Knowing ε₂ only';
-  $('wA').textContent = K ? a.toFixed(3) : 'not used';
-  $('wB').textContent = (K ? b : b1).toFixed(3).replace('-', '−');
-  $('wM').textContent = sgn(m) + ' ± ' + s.toFixed(2);
-  $('wNote').innerHTML = !K
-    ? 'Knowing ε₂ only, the weight is h²·r<sub>g</sub>: the other trait tells us about ω<sub>T</sub> only through shared genetics.'
-    : b < 0
-      ? 'r<sub>e</sub> &gt; r<sub>g</sub>: a high ε₂ now points to shared environment, so it lowers the genetic estimate (explaining away).'
-      : 'Knowing the target’s own ε<sub>T</sub>, ε₂ only adds what its genetic link explains beyond ε<sub>T</sub>, so its weight shrinks.';
+  /* right: histograms of ω_T among the people who fit, against the exact posterior */
+  const P = params({ h2: S.h2, rg: S.rg, re: S.re, z1: S.zT, z2: S.z2 === 1 ? 1 : 0, th1: S.th1, th2: S.th2 });
+  if (!used) { P.a2 = -Infinity; P.b2 = Infinity; }
+  const ex = exactPost(P, GRID), prior = priorOn(S.h2), bw = 0.2, nb = Math.round((WHI - WLO) / bw);
+  const hist = a => { const c = new Array(nb).fill(0); a.forEach(v => { const k = Math.floor((v - WLO) / bw); if (k >= 0 && k < nb) c[k]++; }); return c.map(n => n / Math.max(1, a.length) / bw); };
+  const hA = hist(wAll), hT = hist(wT), ymax = Math.max(...prior, ...ex.dens, ...hA, ...(used ? hT : [])) * 1.05;
+  const sy = v => PB - v / ymax * (PB - PT);
+  const step = hc => { let p = `M${PX(WLO)} ${PB}`; hc.forEach((v, k) => { p += `L${PX(WLO + k * bw).toFixed(1)} ${sy(v).toFixed(1)}L${PX(WLO + (k + 1) * bw).toFixed(1)} ${sy(v).toFixed(1)}`; }); return p + `L${PX(WHI)} ${PB}`; };
+  $('wPriorF').setAttribute('d', curve(prior, ymax).fill);
+  $('wOnlyL').setAttribute('d', used ? step(hT) : '');
+  $('wHistF').setAttribute('d', step(hA) + 'Z'); $('wHistL').setAttribute('d', step(hA));
+  $('wExL').setAttribute('d', curve(ex.dens, ymax).line);
+  meanMarker('wMeanL', 'wMeanT', ex.mean);
+  $('wLegOnly').style.display = used ? '' : 'none'; $('wLegRej').style.display = used ? '' : 'none';
+  $('wN').textContent = wAll.length + ' of ' + WN;
+  $('wMC').textContent = wAll.length ? sgn(mA) : '–';
+  $('wEx').textContent = sgn(ex.mean);
+  $('wNote').innerHTML = !used
+    ? 'Choose the other trait’s diagnosis to see it filter these people.'
+    : `Same total liabilities, different genetics: the other trait removes ${wT.length - wAll.length} of the ${wT.length} people who fit the target, and moves the average ω<sub>T</sub> from ${sgn(mT)} to ${sgn(mA)}.`;
 }
 const STATE = { t: ST, c: SC, g: SG, q: SQ, y: SY, e: SE, f: SF, w: SW }, RENDER = { t: renderT, c: renderC, g: setupG, q: renderQ, y: renderY, e: renderE, f: renderF, w: renderW };
 document.querySelectorAll('.seg').forEach(sg => {

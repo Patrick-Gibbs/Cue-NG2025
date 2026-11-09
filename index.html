@@ -208,7 +208,7 @@
           <label class="sl"><span>r<sub>e</sub></span> <b id="crev"></b><input type="range" id="cre" data-s="c" data-k="re" min="-0.5" max="0.9" step="0.05" value="0.2"><small>Environmental corr.</small></label>
         </div>
         <div class="line">
-          <button class="btn" id="cMCb">Monte Carlo: draw 1,000 people</button><button class="btn" id="cMCr">Reset</button>
+          <button class="btn" id="cMCb">Monte Carlo: draw 100 samples</button><button class="btn" id="cMCr">Reset</button>
           <span id="cMCs" style="font-size:clamp(12px,1vw,15px)"></span>
         </div>
         <div class="post big">
@@ -864,7 +864,7 @@ function renderCMC(P, ex) {
   }
   $('cMC').innerHTML = g;
 }
-$('cMCb').onclick = () => { drawCMC(1000); renderC(); };
+$('cMCb').onclick = () => { drawCMC(100); renderC(); };
 $('cMCr').onclick = () => { CMC = { n: 0, pts: [], k1: [], k2: [], sig: CMC.sig }; renderC(); };
 
 /* ================= Slide 3: sampling ================= */

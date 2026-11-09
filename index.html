@@ -209,6 +209,7 @@
         </div>
         <div class="line">
           <button class="btn" id="cMCb">Monte Carlo: draw 100 samples</button><button class="btn" id="cMCr">Reset</button>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink)"><input type="checkbox" id="cMCh" style="width:16px;height:16px;accent-color:#d98a1a;cursor:pointer"> Show histograms</label>
           <span id="cMCs" style="font-size:clamp(12px,1vw,15px)"></span>
         </div>
         <div class="post big">
@@ -849,7 +850,7 @@ function renderCMC(P, ex) {
     g += `<circle cx="${M.X(a).toFixed(1)}" cy="${M.Y(b).toFixed(1)}" r="${ok ? 2.6 : 1.5}" fill="${ok ? '#1d9e75' : '#b4b2a9'}" opacity="${ok ? 0.85 : 0.45}"/>`;
   }
   const k = CMC.k1.length;
-  if (k > 0) {
+  if (k > 0 && $('cMCh').checked) {
     /* histograms of the kept people's liabilities, inside the plot along the bottom (ε₁) and left (ε₂) edges */
     const NB = 35, bw = 7 / NB, h1 = new Array(NB).fill(0), h2 = new Array(NB).fill(0);
     CMC.k1.forEach(v => { const i = Math.floor((v + 3.5) / bw); if (i >= 0 && i < NB) h1[i]++; });
@@ -857,6 +858,8 @@ function renderCMC(P, ex) {
     const m1 = Math.max(...h1), m2 = Math.max(...h2), H = 64;
     h1.forEach((c, i) => { if (c) { const ht = c / m1 * H; g += `<rect x="${(M.X(-3.5 + i * bw) + 0.5).toFixed(1)}" y="${(y1 - ht).toFixed(1)}" width="${(M.size / NB - 1).toFixed(1)}" height="${ht.toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
     h2.forEach((c, i) => { if (c) { const wd = c / m2 * H; g += `<rect x="${x0}" y="${(M.Y(-3.5 + (i + 1) * bw) + 0.5).toFixed(1)}" width="${wd.toFixed(1)}" height="${(M.size / NB - 1).toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
+  }
+  if (k > 0) {
     const om = CMC.k1.reduce((t, v, i) => t + P.k1 * v + P.k2 * CMC.k2[i], 0) / k;
     $('cMCs').innerHTML = `${CMC.n.toLocaleString()} drawn · <span style="color:#0f6e56">${k} match</span> (${(k / CMC.n * 100).toFixed(1)}%) · <b style="color:#b86f0f">MC score ${sgn(om)}</b> vs exact ${sgn(ex.mean)}`;
   } else {
@@ -865,6 +868,7 @@ function renderCMC(P, ex) {
   $('cMC').innerHTML = g;
 }
 $('cMCb').onclick = () => { drawCMC(100); renderC(); };
+$('cMCh').onchange = () => renderC();
 $('cMCr').onclick = () => { CMC = { n: 0, pts: [], k1: [], k2: [], sig: CMC.sig }; renderC(); };
 
 /* ================= Slide 3: sampling ================= */

@@ -444,7 +444,7 @@
           <span class="seg" data-s="y" data-k="z"><button data-v="0">Control</button><button data-v="1">Case</button></span>
           <span style="margin-left:8px">Target h² = 0.5</span>
           <span class="k" style="margin-left:auto">Joint shown as</span>
-          <span class="seg" data-s="y" data-k="view"><button data-v="rings">Rings</button><button data-v="points">Points</button></span>
+          <span class="seg" data-s="y" data-k="view"><button data-v="rings">Rings</button><button data-v="grid">Grid</button></span>
         </div>
         <div class="sliders">
           <label class="sl th"><span>θ, target</span> <b id="yThv"></b><input type="range" data-s="y" data-k="th" min="-1" max="3" step="0.05" value="1.3"><small id="yKv"></small></label>
@@ -1083,7 +1083,6 @@ function renderQ() {
 
 /* ================= Slide 5: lab value ================= */
 const SY = { z: 1, y: 2, h2y: 0.6, rg: 0.7, re: 0.2, th: 1.3, view: 'rings', mode: 'exact' };
-const YPOP = (() => { const g = mulberry32(7), out = []; for (let i = 0; i < 700; i++) { const a = Math.sqrt(-2 * Math.log(1 - g())), b = 2 * Math.PI * g(); out.push([a * Math.cos(b), a * Math.sin(b)]); } return out; })();
 let YD = { n: 0, kept: 0, pts: [], bins: null, sig: '' };
 const YWIN = 0.1;
 function labGeom() {
@@ -1142,8 +1141,13 @@ function renderY() {
   let h = `<rect x="${PX0L}" y="${PY0}" width="${PX1L - PX0L}" height="${PY1 - PY0}" fill="#ffffff" stroke="#dedcd4"/>`;
   h += `<rect x="${LXp(lo)}" y="${PY0}" width="${Math.max(0, LXp(hi) - LXp(lo))}" height="${PY1 - PY0}" fill="#1d9e75" opacity="0.1"/>`;
   /* joint distribution of (ε_T, lab value) in the population: rings at 1, 2 and 3 SD */
-  if (SY.view === 'points') {
-    for (const [u1, u2] of YPOP) { const v = rho * u1 + sr * u2; if (Math.abs(u1) < 3.5 && Math.abs(v) < 3.5) h += `<circle cx="${LXp(u1).toFixed(1)}" cy="${LYp(v).toFixed(1)}" r="2" fill="#9a988f" opacity="0.5"/>`; }
+  if (SY.view === 'grid') {
+    /* joint density of (ε_T, lab value) on a 35 × 35 grid of cells, darker = more people */
+    const n = 35, cw = 7 / n, pw = (PX1L - PX0L) / n, ph = (PY1 - PY0) / n;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const x = -3.5 + (i + 0.5) * cw, v = -3.5 + (j + 0.5) * cw, dn = Math.exp(-0.5 * (x * x - 2 * rho * x * v + v * v) / (sr * sr));
+      if (dn > 0.01) h += `<rect x="${(PX0L + i * pw).toFixed(1)}" y="${(PY1 - (j + 1) * ph).toFixed(1)}" width="${(pw - 1.2).toFixed(1)}" height="${(ph - 1.2).toFixed(1)}" rx="1" fill="#5f5e5a" opacity="${(0.06 + 0.6 * dn).toFixed(3)}"/>`;
+    }
   } else {
     let d = '';
     [1, 2, 3].forEach(r => { for (let i = 0; i <= 72; i++) { const t = i / 72 * 2 * Math.PI, u1 = r * Math.cos(t), u2 = r * Math.sin(t); d += (i ? 'L' : 'M') + LXp(u1).toFixed(1) + ' ' + LYp(rho * u1 + sr * u2).toFixed(1); } });

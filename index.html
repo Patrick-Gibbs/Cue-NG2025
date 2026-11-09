@@ -328,27 +328,26 @@
 <!-- ============ Slide 3: sampling with GHK ============ -->
 <section class="slide" id="sampling">
   <h1>GHK algorithm (visualisation)</h1>
-  <p class="sub">GHK draws only inside the record's region and weights each sample. Same person and controls as before; compare with Naive Monte Carlo.</p>
+  <p class="sub">Each draw adds a small normal curve to the posterior. With enough draws it lands on the exact answer from the two-trait slide.</p>
   <div class="stage">
     <div class="ghk">
       <div class="plotcol">
         <svg viewBox="0 0 470 480" role="img" aria-label="Draws in the space of the two liabilities, with the region matching this person's diagnoses shaded, and the posterior of each liability along its axis">
           <rect x="40" y="90" width="340" height="340" fill="#ffffff" stroke="#dedcd4" stroke-width="1"/>
-          <rect id="region" fill="#1d9e75" opacity="0.14" stroke="#1d9e75" stroke-width="1"/>
+          <rect id="region" fill="#1d9e75" opacity="0.1" stroke="#1d9e75" stroke-width="1"/>
           <path id="cont" fill="none" stroke="#c9c7bf" stroke-width="0.8"/>
           <line id="t1" stroke="#d85a30" stroke-width="1.4" stroke-dasharray="5 4"/>
           <line id="t2" stroke="#d85a30" stroke-width="1.4" stroke-dasharray="5 4"/>
-          <g id="gMC"></g>
+          <g id="pts"></g>
           <g id="cons"></g>
           <line x1="40" y1="84" x2="380" y2="84" stroke="#b9b7ae" stroke-width="1"/>
           <line x1="386" y1="90" x2="386" y2="430" stroke="#b9b7ae" stroke-width="1"/>
-          <path id="gTopPrior" fill="none" stroke="#9a988f" stroke-width="1.2" stroke-dasharray="4 3"/>
-          <path id="gTopPostF" fill="#7f77dd" opacity="0.3"/>
-          <path id="gTopPostL" fill="none" stroke="#534ab7" stroke-width="1.8"/>
-          <line id="gTopMean" stroke="#3c3489" stroke-width="2.2"/>
-          <path id="gRightPrior" fill="none" stroke="#9a988f" stroke-width="1.2" stroke-dasharray="4 3"/>
-          <path id="gRightPostF" fill="#7f77dd" opacity="0.3"/>
-          <path id="gRightPostL" fill="none" stroke="#534ab7" stroke-width="1.8"/>
+          <path id="gTopF" fill="#7f77dd" opacity="0.3"/>
+          <path id="gTopL" fill="none" stroke="#534ab7" stroke-width="1.4"/>
+          <path id="gTopEx" fill="none" stroke="#1f1e1c" stroke-width="1.3" stroke-dasharray="4 3"/>
+          <path id="gRightF" fill="#7f77dd" opacity="0.3"/>
+          <path id="gRightL" fill="none" stroke="#534ab7" stroke-width="1.4"/>
+          <path id="gRightEx" fill="none" stroke="#1f1e1c" stroke-width="1.3" stroke-dasharray="4 3"/>
           <text x="210" y="472" text-anchor="middle" font-size="13" fill="#6b6a65">ε₁, total liability for the target →</text>
           <text x="392" y="40" font-size="13" fill="#6b6a65">↑ ε₂, total</text>
           <text x="392" y="56" font-size="13" fill="#6b6a65">liability for</text>
@@ -356,11 +355,7 @@
           <text id="t1l" y="448" text-anchor="middle" font-size="13" font-weight="600" fill="#d85a30">θ₁</text>
           <text id="t2l" x="24" text-anchor="middle" font-size="13" font-weight="600" fill="#d85a30" dominant-baseline="central">θ₂</text>
         </svg>
-        <div class="leg">
-          <span><span class="sq" style="background:#1d9e75;opacity:.4"></span>Consistent with this person's record</span>
-          <span><span class="sw" style="border-color:#9a988f;border-top-style:dashed"></span>Population (prior)</span>
-          <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>This person (posterior)</span>
-        </div>
+        <div class="leg" id="leg"></div>
       </div>
 
       <div class="panel">
@@ -378,32 +373,31 @@
         </div>
         <div class="line">
           <span class="seg" data-s="g" data-k="mode"><button data-v="naive">Naive Monte Carlo</button><button data-v="ghk">GHK</button></span>
-          <button class="btn" id="d1">Draw 1 sample</button><button class="btn" id="d100">Draw 100 samples</button><button class="btn" id="rs">Reset</button>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink)"><input type="checkbox" id="gMCh" style="width:16px;height:16px;accent-color:#d98a1a;cursor:pointer"> Show histograms</label>
+          <button class="btn" id="d1">Draw 1</button><button class="btn" id="d100">Draw 100</button><button class="btn" id="rs">Reset</button>
         </div>
-        <div class="line" style="min-height:1.4em"><span id="gMCs" style="font-size:clamp(12px,1vw,15px)"></span></div>
-        <div class="post big">
+        <div class="post">
           <h3>Posterior of ω<sub>T</sub> for this person</h3>
-          <svg viewBox="0 0 480 215" role="img" aria-label="Prior, exact posterior and the estimate from the draws of the person's genetic liability">
+          <svg viewBox="0 0 480 215" role="img" aria-label="Prior and posterior distributions of the person's genetic liability for the target disease">
             <g id="axis"></g>
             <path id="priorF" fill="#b4b2a9" opacity="0.28"/>
-            <path id="postF" fill="#7f77dd" opacity="0.28"/>
-            <path id="postL" fill="none" stroke="#534ab7" stroke-width="2.2"/>
-            <path id="estL" fill="none" stroke="#d98a1a" stroke-width="2.2"/>
+            <path id="estF" fill="#7f77dd" opacity="0.28"/>
+            <path id="estL" fill="none" stroke="#534ab7" stroke-width="2"/>
+            <path id="exactL" fill="none" stroke="#1f1e1c" stroke-width="1.4" stroke-dasharray="4 3"/>
             <line id="meanL" stroke="#534ab7" stroke-width="1.6"/>
             <text id="meanT" font-size="12" font-weight="600" fill="#534ab7" text-anchor="middle"></text>
             <text x="250" y="210" text-anchor="middle" font-size="12" fill="#6b6a65">ω<tspan baseline-shift="sub" font-size="9">T</tspan>, genetic liability for the target →</text>
           </svg>
           <div class="leg" style="justify-content:flex-start;margin:2px 0 4px">
             <span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span>
-            <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior (exact)</span>
-            <span><span class="sw" style="border-color:#d98a1a"></span>Estimate from your samples</span>
+            <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior from your draws</span>
+            <span><span class="sw" style="border-color:#1f1e1c;border-top-style:dashed"></span>Exact posterior</span>
           </div>
         </div>
-        <div class="cards three">
-          <div class="card"><p>Share of people with this record</p><b id="gP">–</b></div>
-          <div class="card hi"><p>Posterior mean (the LTPI score)</p><b id="gM">–</b></div>
-          <div class="card"><p>Posterior SD</p><b id="gS">–</b></div>
+        <div class="cards">
+          <div class="card"><p>Draws</p><b id="cn">0</b></div>
+          <div class="card"><p>Useful draws</p><b id="cu">–</b></div>
+          <div class="card hi"><p>Posterior mean</p><b id="ce">–</b></div>
+          <div class="card"><p>Posterior SD</p><b id="cs">–</b></div>
         </div>
       </div>
     </div>
@@ -881,13 +875,17 @@ $('cMCr').onclick = () => { CMC = { n: 0, pts: [], k1: [], k2: [], sig: CMC.sig 
 /* ================= Slide 3: sampling ================= */
 const SG = { h2: 0.5, rg: 0.6, re: 0.2, th1: 1.65, th2: 1.05, z1: 0, z2: 1, mode: 'ghk' };
 let P2, st, pts, last, exact, exactM;
+const MLEG = '<span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior from your draws</span><span><span class="sw" style="border-color:#1f1e1c;border-top-style:dashed"></span>Exact posterior</span>';
 const BW = 0.02, BLO = WLO - 2, NB = Math.round((WHI - WLO + 4) / BW);
 $('axis').innerHTML = axisSvg();
 function setupG() {
   sliderLabels(SG, '');
   P2 = params(SG);
   drawPlane(P2, SG, { region: 'region', cont: 'cont', t1: 't1', t2: 't2', t1l: 't1l', t2l: 't2l' }, M1);
-  drawMargins(P2, 'g');
+  const on = SG.mode === 'ghk';
+  $('leg').innerHTML = on
+    ? '<span><span class="dot" style="background:#7f77dd"></span>GHK draw, size ∝ weight</span>' + MLEG
+    : '<span><span class="dot" style="background:#1d9e75"></span>Kept</span><span><span class="dot" style="background:#b4b2a9"></span>Rejected</span>' + MLEG;
   exact = exactPost(P2, GRID); exactM = exactMargins(P2);
   /* Keep the plot populated: redo the same number of draws for the new settings */
   const n = st ? st.n : 0;
@@ -935,11 +933,11 @@ function moments(bins) {
   const mean = bins.m1 / bins.W, varM = Math.max(0, bins.m2 / bins.W - mean * mean);
   return { mean, sd: Math.sqrt(P2.v + varM) };
 }
-function resetG() { st = { n: 0, acc: 0, sr: 0, bins: newBins(), hist: newHist() }; pts = []; last = null; renderG(); }
+function resetG() { st = { n: 0, acc: 0, bins: newBins(), hist: newHist() }; pts = []; last = null; renderG(); }
 function drawG(n) {
   for (let i = 0; i < n; i++) {
     if (SG.mode === 'ghk') {
-      const g = ghk(); st.n++; st.acc++; st.sr += g.r; addBin(st.bins, om(g.e1, g.e2), g.r); addHist(st.hist, g.e1, g.e2, g.r);
+      const g = ghk(); st.n++; st.acc++; addBin(st.bins, om(g.e1, g.e2), g.r); addHist(st.hist, g.e1, g.e2, g.r);
       pts.push({ x: g.e1, y: g.e2, k: 'g', w: g.w }); last = g;
     } else {
       const e1 = randn(), e2 = P2.rho * e1 + P2.L22 * randn(), ins = e1 > P2.a1 && e1 < P2.b1 && e2 > P2.a2 && e2 < P2.b2;
@@ -951,52 +949,39 @@ function drawG(n) {
   renderG();
 }
 function renderG() {
-  const M = M1, y1 = M.y0 + M.size;
   let h = '';
   for (const p of pts) {
-    if (p.x < -3.5 || p.x > 3.5 || p.y < -3.5 || p.y > 3.5) continue;
-    if (p.k === 'g') h += `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="${(1.6 + 3 * p.w).toFixed(1)}" fill="#1d9e75" opacity="0.8"/>`;
-    else h += `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="${p.k === 'a' ? 2.6 : 1.5}" fill="${p.k === 'a' ? '#1d9e75' : '#b4b2a9'}" opacity="${p.k === 'a' ? 0.85 : 0.45}"/>`;
+    if (p.k === 'g') h += `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="${(1.6 + 3.6 * p.w).toFixed(1)}" fill="#7f77dd" opacity="0.7"/>`;
+    else h += `<circle cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="${p.k === 'a' ? 2.6 : 1.6}" fill="${p.k === 'a' ? '#1d9e75' : '#b4b2a9'}" opacity="${p.k === 'a' ? 0.9 : 0.55}"/>`;
   }
-  /* weighted histograms of the samples, inside the plot along the bottom (ε₁) and left (ε₂) edges */
-  if (st.hist.W > 0 && $('gMCh').checked) {
-    const NBh = 35, f = HN / NBh, a1 = new Array(NBh).fill(0), a2 = new Array(NBh).fill(0);
-    for (let i = 0; i < HN; i++) { a1[Math.floor(i / f)] += st.hist.a[i]; a2[Math.floor(i / f)] += st.hist.b[i]; }
-    const m1 = Math.max(...a1), m2 = Math.max(...a2), Hh = 64, bw = 7 / NBh;
-    a1.forEach((c, i) => { if (c) { const ht = c / m1 * Hh; h += `<rect x="${(M.X(-3.5 + i * bw) + 0.5).toFixed(1)}" y="${(y1 - ht).toFixed(1)}" width="${(M.size / NBh - 1).toFixed(1)}" height="${ht.toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
-    a2.forEach((c, i) => { if (c) { const wd = c / m2 * Hh; h += `<rect x="${M.x0}" y="${(M.Y(-3.5 + (i + 1) * bw) + 0.5).toFixed(1)}" width="${wd.toFixed(1)}" height="${(M.size / NBh - 1).toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
-  }
-  $('gMC').innerHTML = h;
+  $('pts').innerHTML = h;
   $('cons').innerHTML = '';
 
-  /* posterior panel: exact posterior, plus the estimate from the samples in gold */
+  const H = st.hist, s1 = H.W > 0 ? stepXY(H.a, H.W) : null, s2 = H.W > 0 ? stepXY(H.b, H.W) : null;
+  const mx1 = Math.max(...exactM.e1, ...(s1 ? s1.ys : [0])), mx2 = Math.max(...exactM.e2, ...(s2 ? s2.ys : [0]));
+  $('gTopEx').setAttribute('d', topPath(EG, exactM.e1, mx1));
+  $('gRightEx').setAttribute('d', rightPath(EG, exactM.e2, mx2));
+  const tp = s1 ? topPath(s1.xs, s1.ys, mx1) : '', rp = s2 ? rightPath(s2.xs, s2.ys, mx2) : '';
+  $('gTopL').setAttribute('d', tp); $('gTopF').setAttribute('d', tp ? closeTop(tp) : '');
+  $('gRightL').setAttribute('d', rp); $('gRightF').setAttribute('d', rp ? closeRight(rp) : '');
+
   const est = density(st.bins), mom = moments(st.bins), PRIOR = priorOn(P2.h2);
   const ymax = Math.max(...PRIOR, ...exact.dens, ...est) * 1.08;
   const pr = curve(PRIOR, ymax), ex = curve(exact.dens, ymax), es = curve(est, ymax);
   $('priorF').setAttribute('d', pr.fill);
-  $('postF').setAttribute('d', ex.fill); $('postL').setAttribute('d', ex.line);
+  $('exactL').setAttribute('d', ex.line);
+  $('estF').setAttribute('d', st.bins.W > 0 ? es.fill : '');
   $('estL').setAttribute('d', st.bins.W > 0 ? es.line : '');
-  meanMarker('meanL', 'meanT', exact.mean);
-  $('gP').textContent = exact.Z < 0.001 ? (exact.Z * 100).toFixed(3) + '%' : (exact.Z * 100).toFixed(1) + '%';
-  $('gM').textContent = sgn(exact.mean);
-  $('gS').textContent = exact.sd.toFixed(2);
+  if (mom) meanMarker('meanL', 'meanT', mom.mean); else { $('meanL').style.opacity = 0; $('meanT').textContent = ''; }
 
-  /* status line, same format as slide 4 */
-  let msg = '';
-  if (st.n) {
-    if (SG.mode === 'ghk') {
-      const share = st.sr / st.n;
-      msg = `${st.n.toLocaleString()} drawn · <span style="color:#0f6e56">all used, weighted</span> · <b style="color:#b86f0f">GHK score ${sgn(mom.mean)}</b> vs exact ${sgn(exact.mean)} · share ${(share * 100).toFixed(1)}% vs ${(exact.Z * 100).toFixed(1)}%`;
-    } else if (mom) {
-      msg = `${st.n.toLocaleString()} drawn · <span style="color:#0f6e56">${st.acc} match</span> (${(st.acc / st.n * 100).toFixed(1)}%) · <b style="color:#b86f0f">MC score ${sgn(mom.mean)}</b> vs exact ${sgn(exact.mean)}`;
-    } else msg = `${st.n.toLocaleString()} drawn · none match yet`;
-  }
-  $('gMCs').innerHTML = msg;
+  $('cn').textContent = st.n;
+  $('cu').textContent = st.n ? st.acc + ' (' + Math.round(st.acc / st.n * 100) + '%)' : '–';
+  $('ce').textContent = mom ? sgn(mom.mean) : '–';
+  $('cs').textContent = mom ? mom.sd.toFixed(2) : '–';
 }
 $('d1').onclick = () => drawG(1);
 $('d100').onclick = () => drawG(100);
 $('rs').onclick = resetG;
-$('gMCh').onchange = renderG;
 
 /* ================= Helpers for slides 4–6 ================= */
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }

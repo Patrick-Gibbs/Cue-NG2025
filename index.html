@@ -143,7 +143,7 @@
 <!-- ============ Equations: Many traits: the multivariate model ============ -->
 <section class="slide eqs" id="eq-multi">
   <p class="kicker">Equations from the paper</p>
-  <h1>Extension to multiple traits</h1>
+  <h1>Extension to multiple traits (a)</h1>
   <p class="sub">The same model for Q traits at once, with covariances estimated by LDSC.</p>
   <div class="stage">
     <div class="eqgrid">
@@ -159,7 +159,7 @@
 
 <!-- ============ Slide 2: exact posterior for one person ============ -->
 <section class="slide" id="two-traits">
-  <h1>Extension to multiple traits (visualisation)</h1>
+  <h1>Extension to multiple traits (a) (visualisation)</h1>
   <p class="sub">Posterior = prior × likelihood of their diagnoses, computed exactly. Monte Carlo shows the brute-force way: simulate people and keep those with this record.</p>
   <div class="stage">
     <div class="ghk">
@@ -236,6 +236,62 @@
           <div class="card"><p>Share of people with this record</p><b id="cP">–</b></div>
           <div class="card hi"><p>Posterior mean (the LTPI score)</p><b id="cM">–</b></div>
           <div class="card"><p>Posterior SD</p><b id="cS">–</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ From total to genetic liability ============ -->
+<section class="slide" id="to-genetic">
+  <h1>Extension to multiple traits (b) (visualisation)</h1>
+  <p class="sub">Genetic and total liability are jointly normal, so once total liabilities are fixed, ω<sub>T</sub> is normal with a mean that is a weighted sum of them. The diagnoses only give a range for each ε, so the LTPI score averages this over that range.</p>
+  <div class="stage">
+    <div class="ghk">
+      <div class="plotcol">
+        <svg id="wPlane" viewBox="0 0 470 480" role="img" aria-label="Genetic liability for the target against total liability for the other trait, with the spread of genetic liability for this person drawn as a slice"></svg>
+        <div class="leg">
+          <span><span class="sw" style="border-color:#a8a69e"></span>Population</span>
+          <span><span class="sw" style="border-color:#888780;border-top-style:dashed"></span>Knowing ε₂ only</span>
+          <span><span class="sw" style="border-color:#534ab7"></span>Knowing ε₂ and ε<sub>T</sub></span>
+          <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Spread of ω<sub>T</sub> for this person</span>
+        </div>
+        <p id="wNote" style="font-size:clamp(12px,1vw,15px);color:var(--muted);text-align:center;margin-top:4px"></p>
+      </div>
+      <div class="panel">
+        <div class="line">
+          <span class="k">What we know</span>
+          <span class="seg" data-s="w" data-k="know"><button data-v="0">ε₂ only</button><button data-v="1">ε₂ and ε<sub>T</sub></button></span>
+        </div>
+        <div class="sliders">
+          <label class="sl"><span>ε₂, other</span> <b id="wE2v"></b><input type="range" data-s="w" data-k="e2" min="-3" max="3" step="0.05" value="1.5"><small>Total liability</small></label>
+          <label class="sl" id="wEtLab"><span>ε<sub>T</sub>, target</span> <b id="wEtv"></b><input type="range" data-s="w" data-k="eT" min="-3" max="3" step="0.05" value="1"><small>Total liability</small></label>
+          <label class="sl"><span>h²</span> <b id="wH2v"></b><input type="range" data-s="w" data-k="h2" min="0.1" max="0.9" step="0.05" value="0.5"><small>Heritability</small></label>
+          <label class="sl"><span>r<sub>g</sub></span> <b id="wRgv"></b><input type="range" data-s="w" data-k="rg" min="-0.9" max="0.95" step="0.05" value="0.6"><small>Genetic corr.</small></label>
+          <label class="sl"><span>r<sub>e</sub></span> <b id="wRev"></b><input type="range" data-s="w" data-k="re" min="-0.5" max="0.9" step="0.05" value="0.2"><small>Environmental corr.</small></label>
+        </div>
+        <div class="post big">
+          <h3>ω<sub>T</sub> for this person, given their total liabilities</h3>
+          <svg viewBox="0 0 480 215" role="img" aria-label="Prior and conditional distributions of genetic liability for the target">
+            <g id="wAxis"></g>
+            <path id="wPriorF" fill="#b4b2a9" opacity="0.28"/>
+            <path id="wOnlyL" fill="none" stroke="#888780" stroke-width="1.8" stroke-dasharray="5 3"/>
+            <path id="wPostF" fill="#7f77dd" opacity="0.3"/>
+            <path id="wPostL" fill="none" stroke="#534ab7" stroke-width="2.2"/>
+            <line id="wMeanL" stroke="#534ab7" stroke-width="1.6"/>
+            <text id="wMeanT" font-size="12" font-weight="600" fill="#534ab7" text-anchor="middle"></text>
+            <text x="250" y="210" text-anchor="middle" font-size="12" fill="#6b6a65">ω<tspan baseline-shift="sub" font-size="9">T</tspan>, genetic liability for the target →</text>
+          </svg>
+          <div class="leg" style="justify-content:flex-start;margin:2px 0 4px">
+            <span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span>
+            <span id="wLegOnly"><span class="sw" style="border-color:#888780;border-top-style:dashed"></span>Knowing ε₂ only</span>
+            <span><span class="sq" style="background:#7f77dd;opacity:.6"></span><span id="wLegPost">Knowing ε₂ and ε<sub>T</sub></span></span>
+          </div>
+        </div>
+        <div class="cards three">
+          <div class="card"><p>Weight on ε<sub>T</sub> (target)</p><b id="wA">–</b></div>
+          <div class="card"><p>Weight on ε₂ (other trait)</p><b id="wB">–</b></div>
+          <div class="card hi"><p>ω<sub>T</sub>: mean ± SD</p><b id="wM">–</b></div>
         </div>
       </div>
     </div>
@@ -1340,7 +1396,64 @@ function renderF() {
 }
 
 /* ================= Controls (both slides) ================= */
-const STATE = { t: ST, c: SC, g: SG, q: SQ, y: SY, e: SE, f: SF }, RENDER = { t: renderT, c: renderC, g: setupG, q: renderQ, y: renderY, e: renderE, f: renderF };
+/* From total to genetic liability: E[ω_T | ε] = Cov(ω_T, ε) (Ω+Σ)⁻¹ ε, residual variance h² − Cov (Ω+Σ)⁻¹ Covᵀ */
+const SW = { know: 1, e2: 1.5, eT: 1, h2: 0.5, rg: 0.6, re: 0.2 };
+$('wAxis').innerHTML = axisSvg();
+function renderW() {
+  const h2 = SW.h2, h = Math.sqrt(h2), cT2 = h2 * SW.rg, rho = h2 * SW.rg + (1 - h2) * SW.re, den = 1 - rho * rho;
+  const b1 = cT2, v1 = Math.max(1e-4, h2 - cT2 * cT2);
+  const a = (h2 - rho * cT2) / den, b = (cT2 - rho * h2) / den, v2 = Math.max(1e-4, h2 - (a * h2 + b * cT2));
+  const m1 = b1 * SW.e2, m2 = a * SW.eT + b * SW.e2, K = SW.know, m = K ? m2 : m1, s = Math.sqrt(K ? v2 : v1);
+  $('wE2v').textContent = fmt(SW.e2); $('wEtv').textContent = fmt(SW.eT); $('wH2v').textContent = h2.toFixed(2);
+  $('wRgv').textContent = fmt(SW.rg); $('wRev').textContent = fmt(SW.re);
+  $('wEtLab').style.opacity = K ? 1 : 0.35;
+  const GX0 = 50, GX1 = 430, GY0 = 40, GY1 = 420;
+  const WX = e => GX0 + (e + 3.5) / 7 * (GX1 - GX0), WY = w => GY1 - (w + 2.5) / 5 * (GY1 - GY0);
+  let g = `<defs><clipPath id="wClip"><rect x="${GX0}" y="${GY0}" width="${GX1 - GX0}" height="${GY1 - GY0}"/></clipPath></defs>`;
+  g += `<rect x="${GX0}" y="${GY0}" width="${GX1 - GX0}" height="${GY1 - GY0}" fill="#ffffff" stroke="#dedcd4"/>`;
+  for (let t = -2; t <= 2; t++) g += `<line x1="${GX0}" y1="${WY(t)}" x2="${GX1}" y2="${WY(t)}" stroke="#f0efe9"/><text x="${GX0 - 8}" y="${WY(t) + 4}" text-anchor="end" font-size="12" fill="#6b6a65">${t < 0 ? '−' + Math.abs(t) : t}</text>`;
+  for (let t = -3; t <= 3; t++) g += `<text x="${WX(t)}" y="${GY1 + 18}" text-anchor="middle" font-size="12" fill="#6b6a65">${t < 0 ? '−' + Math.abs(t) : t}</text>`;
+  g += `<g clip-path="url(#wClip)">`;
+  /* population joint of (ε₂, ω_T): rings at 1 and 2 SD */
+  const c = h * SW.rg, sc = Math.sqrt(Math.max(0, 1 - c * c));
+  let d = '';
+  [1, 2].forEach(r => { for (let i = 0; i <= 72; i++) { const t = i / 72 * 2 * Math.PI, x = r * Math.cos(t), w = h * (c * r * Math.cos(t) + sc * r * Math.sin(t)); d += (i ? 'L' : 'M') + WX(x).toFixed(1) + ' ' + WY(w).toFixed(1); } });
+  g += `<path d="${d}" fill="none" stroke="#a8a69e" stroke-width="1.1"/>`;
+  g += `<line x1="${WX(-3.5)}" y1="${WY(-3.5 * b1)}" x2="${WX(3.5)}" y2="${WY(3.5 * b1)}" stroke="#888780" stroke-width="1.8" stroke-dasharray="6 4"/>`;
+  if (K) g += `<line x1="${WX(-3.5)}" y1="${WY(a * SW.eT - 3.5 * b)}" x2="${WX(3.5)}" y2="${WY(a * SW.eT + 3.5 * b)}" stroke="#534ab7" stroke-width="2.4"/>`;
+  /* the slice: distribution of ω_T for this person, drawn sideways at their ε₂ */
+  const x0 = WX(SW.e2), dir = SW.e2 > 0.6 ? -1 : 1, smin = Math.sqrt(K ? Math.min(v1, v2) : v1), k = Math.min(49, 120 * smin);
+  const slice = (mu, sd) => { let p = ''; for (let i = 0; i <= 160; i++) { const w = -2.5 + i * 5 / 160; p += (i ? 'L' : 'M') + (x0 + dir * k / sd * Math.exp(-0.5 * ((w - mu) / sd) ** 2)).toFixed(1) + ' ' + WY(w).toFixed(1); } return p; };
+  g += `<line x1="${x0}" y1="${GY0}" x2="${x0}" y2="${GY1}" stroke="#534ab7" stroke-width="1" stroke-dasharray="2 3"/>`;
+  if (K) g += `<path d="${slice(m1, Math.sqrt(v1))}" fill="none" stroke="#888780" stroke-width="1.6" stroke-dasharray="5 3"/>`;
+  const sp = slice(m, s);
+  g += `<path d="${sp}L${x0} ${WY(-2.5)}L${x0} ${WY(2.5)}Z" fill="#7f77dd" fill-opacity="0.35"/><path d="${sp}" fill="none" stroke="#534ab7" stroke-width="2"/>`;
+  g += `<circle cx="${x0}" cy="${WY(m)}" r="6" fill="#534ab7" stroke="#fff" stroke-width="2"/>`;
+  g += `</g>`;
+  g += `<text x="${x0}" y="${GY0 - 8}" text-anchor="middle" font-size="13" font-weight="600" fill="#534ab7">ε₂ = ${fmt(SW.e2)}</text>`;
+  g += `<text x="${(GX0 + GX1) / 2}" y="${GY1 + 42}" text-anchor="middle" font-size="13" fill="#6b6a65">ε₂, total liability for the other trait →</text>`;
+  g += `<text x="16" y="${(GY0 + GY1) / 2}" text-anchor="middle" font-size="13" fill="#6b6a65" transform="rotate(-90 16 ${(GY0 + GY1) / 2})">ω<tspan baseline-shift="sub" font-size="9">T</tspan>, genetic liability for the target →</text>`;
+  $('wPlane').innerHTML = g;
+  /* right: the same distributions along the ω_T axis */
+  const prior = priorOn(h2), nd = (mu, v) => GRID.map(w => phi((w - mu) / Math.sqrt(v)) / Math.sqrt(v));
+  const d1 = nd(m1, v1), d2 = K ? nd(m2, v2) : d1, ymax = Math.max(...prior, ...d1, ...d2) * 1.05;
+  const pc = curve(prior, ymax), c1 = curve(d1, ymax), c2 = curve(d2, ymax);
+  $('wPriorF').setAttribute('d', pc.fill);
+  $('wOnlyL').setAttribute('d', K ? c1.line : '');
+  $('wPostF').setAttribute('d', c2.fill); $('wPostL').setAttribute('d', c2.line);
+  meanMarker('wMeanL', 'wMeanT', m);
+  $('wLegOnly').style.display = K ? '' : 'none';
+  $('wLegPost').innerHTML = K ? 'Knowing ε₂ and ε<sub>T</sub>' : 'Knowing ε₂ only';
+  $('wA').textContent = K ? a.toFixed(3) : 'not used';
+  $('wB').textContent = (K ? b : b1).toFixed(3).replace('-', '−');
+  $('wM').textContent = sgn(m) + ' ± ' + s.toFixed(2);
+  $('wNote').innerHTML = !K
+    ? 'Knowing ε₂ only, the weight is h²·r<sub>g</sub>: the other trait tells us about ω<sub>T</sub> only through shared genetics.'
+    : b < 0
+      ? 'r<sub>e</sub> &gt; r<sub>g</sub>: a high ε₂ now points to shared environment, so it lowers the genetic estimate (explaining away).'
+      : 'Knowing the target’s own ε<sub>T</sub>, ε₂ only adds what its genetic link explains beyond ε<sub>T</sub>, so its weight shrinks.';
+}
+const STATE = { t: ST, c: SC, g: SG, q: SQ, y: SY, e: SE, f: SF, w: SW }, RENDER = { t: renderT, c: renderC, g: setupG, q: renderQ, y: renderY, e: renderE, f: renderF, w: renderW };
 document.querySelectorAll('.seg').forEach(sg => {
   const S = STATE[sg.dataset.s], k = sg.dataset.k;
   sg.querySelectorAll('button').forEach(b => {
@@ -1349,7 +1462,7 @@ document.querySelectorAll('.seg').forEach(sg => {
     b.addEventListener('click', () => { S[k] = v; sg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); RENDER[sg.dataset.s](); });
   });
 });
-const pending = { t: false, c: false, g: false, q: false, y: false, e: false, f: false };
+const pending = { t: false, c: false, g: false, q: false, y: false, e: false, f: false, w: false };
 document.querySelectorAll('input[type=range]').forEach(el => {
   const s = el.dataset.s, S = STATE[s];
   el.addEventListener('input', () => {
@@ -1365,6 +1478,7 @@ renderQ();
 renderY();
 renderE();
 renderF();
+renderW();
 fromHash();
 </script>
 </body>

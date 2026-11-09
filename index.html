@@ -434,7 +434,8 @@
   <div class="stage">
     <div class="ghk">
       <div class="plotcol">
-        <svg id="yPlane" viewBox="0 0 470 480" style="flex:0 1 auto;height:auto" role="img" aria-label="Target liability against lab value, with the lab value's distribution in cases and controls along the right edge"></svg>
+        <svg id="yPlane" viewBox="0 0 470 480" style="flex:0 1 auto;height:auto;max-height:50vh" role="img" aria-label="Target liability against lab value, with the lab value's distribution in cases and controls along the right edge"></svg>
+        <svg id="yLine2" viewBox="0 0 470 175" style="flex:0 0 auto;height:auto;max-height:20vh;margin-top:4px" role="img" aria-label="Mean target liability against lab value, for cases and controls"></svg>
         <div class="leg">
           <span><span class="sw" style="border-color:#a8a69e"></span>Joint distribution in the population</span>
           <span><span class="sq" style="background:#1d9e75;opacity:.4"></span>Fits their diagnosis</span>
@@ -1063,9 +1064,9 @@ function renderQ() {
   $('qHist').innerHTML = h;
 
   /* R² against Q */
-  const RX = q => 60 + q * 50, top = Math.max(0.2, Math.ceil(Math.max(...r2) * 1.15 * 10) / 10), RY = v => 180 - v / top * 150;
+  const RX = q => 60 + q * 50, top = 1, RY = v => 180 - v / top * 150;
   let g = '';
-  for (let t = 0; t <= top + 1e-9; t += 0.1) g += `<line x1="60" y1="${RY(t)}" x2="460" y2="${RY(t)}" stroke="#ecebe5"/><text x="52" y="${RY(t) + 4}" text-anchor="end" font-size="11" fill="#6b6a65">${t.toFixed(1)}</text>`;
+  for (let t = 0; t <= top + 1e-9; t += 0.2) g += `<line x1="60" y1="${RY(t)}" x2="460" y2="${RY(t)}" stroke="#ecebe5"/><text x="52" y="${RY(t) + 4}" text-anchor="end" font-size="11" fill="#6b6a65">${t.toFixed(1)}</text>`;
   g += `<path d="${r2.map((v, q) => (q ? 'L' : 'M') + RX(q) + ' ' + RY(v).toFixed(1)).join('')}" fill="none" stroke="#7f77dd" stroke-width="2"/>`;
   r2.forEach((v, q) => { g += `<circle cx="${RX(q)}" cy="${RY(v).toFixed(1)}" r="${q === SQ.Q ? 7 : 4}" fill="${q === 0 ? '#888780' : '#534ab7'}" stroke="#fff" stroke-width="1.5"/><text x="${RX(q)}" y="198" text-anchor="middle" font-size="12" fill="#6b6a65">${q}</text>`; });
   g += `<text x="${RX(SQ.Q)}" y="${RY(r2[SQ.Q]) - 12}" text-anchor="middle" font-size="12" font-weight="600" fill="#534ab7">${r2[SQ.Q].toFixed(2)}</text>`;
@@ -1161,6 +1162,28 @@ function renderY() {
   h += `<text x="${PX0L}" y="${PY0 - 12}" font-size="13" fill="#6b6a65">↑ Lab value</text>`;
   h += `<text x="${(PX0L + PX1L) / 2}" y="${PY1 + 40}" text-anchor="middle" font-size="13" fill="#6b6a65">Total liability for the target, ε<tspan baseline-shift="sub" font-size="9">T</tspan> →</text>`;
   $('yPlane').innerHTML = h;
+
+  /* below: mean ε_T against lab value, for cases and controls. ε_T | y is N(ρy, 1−ρ²), truncated at θ */
+  const tmean = (z, v) => { const mu = rho * v, a = (th - mu) / sr; return z ? mu + sr * phi(a) / Math.max(1e-12, 1 - Phi(a)) : mu - sr * phi(a) / Math.max(1e-12, Phi(a)); };
+  const K = 1 - Phi(th), base = [-phi(th) / (1 - K), phi(th) / K];
+  const ys = Array.from({ length: 61 }, (_, i) => -3 + i * 0.1), L = [0, 1].map(z => ys.map(v => tmean(z, v)));
+  const all = [...L[0], ...L[1], th], lo2 = Math.floor(Math.min(...all) * 2) / 2 - 0.25, hi2 = Math.ceil(Math.max(...all) * 2) / 2 + 0.25;
+  const QX = v => 60 + (v + 3) / 6 * 340, QY = v => 130 - (v - lo2) / (hi2 - lo2) * 108;
+  let q = `<text x="60" y="14" font-size="13" font-weight="600" fill="#1f1e1c">Mean ε<tspan baseline-shift="sub" font-size="9">T</tspan> given the diagnosis and lab value</text>`;
+  for (let t = Math.ceil(lo2); t <= hi2; t++) q += `<line x1="60" y1="${QY(t)}" x2="400" y2="${QY(t)}" stroke="#ecebe5"/><text x="52" y="${QY(t) + 4}" text-anchor="end" font-size="11" fill="#6b6a65">${t < 0 ? '−' + Math.abs(t) : t}</text>`;
+  q += `<line x1="60" y1="${QY(th)}" x2="400" y2="${QY(th)}" stroke="#d85a30" stroke-width="1.2" stroke-dasharray="5 4"/><text x="64" y="${QY(th) + 13}" font-size="12" font-weight="600" fill="#d85a30">θ</text>`;
+  [0, 1].forEach(z => {
+    const col = z ? '#d85a30' : '#888780', on = z === SY.z;
+    q += `<line x1="60" y1="${QY(base[z])}" x2="400" y2="${QY(base[z])}" stroke="${col}" stroke-width="1.2" stroke-dasharray="3 3" opacity="${on ? 0.9 : 0.45}"/>`;
+    q += `<path d="${ys.map((v, i) => (i ? 'L' : 'M') + QX(v).toFixed(1) + ' ' + QY(L[z][i]).toFixed(1)).join('')}" fill="none" stroke="${col}" stroke-width="${on ? 3 : 1.6}" opacity="${on ? 1 : 0.55}"/>`;
+    q += `<text x="${QX(3) + 4}" y="${QY(L[z][60]) + 4}" font-size="12" font-weight="600" fill="${col}">${z ? 'cases' : 'controls'}</text>`;
+  });
+  const cy = tmean(SY.z, SY.y);
+  q += `<line x1="${QX(SY.y)}" y1="22" x2="${QX(SY.y)}" y2="130" stroke="#534ab7" stroke-width="1" stroke-dasharray="2 3"/><circle cx="${QX(SY.y)}" cy="${QY(cy)}" r="6" fill="#534ab7" stroke="#fff" stroke-width="2"/>`;
+  q += `<line x1="60" y1="130" x2="400" y2="130" stroke="#b9b7ae"/>`;
+  for (let t = -3; t <= 3; t++) q += `<text x="${QX(t)}" y="146" text-anchor="middle" font-size="11" fill="#6b6a65">${t < 0 ? '−' + Math.abs(t) : t}</text>`;
+  q += `<text x="230" y="166" text-anchor="middle" font-size="12" fill="#6b6a65">Lab value (SD) → · dashed: diagnosis alone</text>`;
+  $('yLine2').innerHTML = q;
   const cur = labPosterior(SY.z, SY.y, true);
   /* right: posterior for this person */
   const bin = labPosterior(SY.z, SY.y, false), dw = 0.025;

@@ -177,9 +177,11 @@
           <path id="cTopPostF" fill="#7f77dd" opacity="0.3"/>
           <path id="cTopPostL" fill="none" stroke="#534ab7" stroke-width="1.8"/>
           <line id="cTopMean" stroke="#3c3489" stroke-width="2.2"/>
+          <path id="cTopEx" fill="none" stroke="#1f1e1c" stroke-width="1.3" stroke-dasharray="4 3"/>
           <path id="cRightPrior" fill="none" stroke="#9a988f" stroke-width="1.2" stroke-dasharray="4 3"/>
           <path id="cRightPostF" fill="#7f77dd" opacity="0.3"/>
           <path id="cRightPostL" fill="none" stroke="#534ab7" stroke-width="1.8"/>
+          <path id="cRightEx" fill="none" stroke="#1f1e1c" stroke-width="1.3" stroke-dasharray="4 3"/>
           <text x="210" y="472" text-anchor="middle" font-size="13" fill="#6b6a65">ε₁, total liability for the target →</text>
           <text x="392" y="40" font-size="13" fill="#6b6a65">↑ ε₂, total</text>
           <text x="392" y="56" font-size="13" fill="#6b6a65">liability for</text>
@@ -187,7 +189,7 @@
           <text id="cT1l" y="448" text-anchor="middle" font-size="13" font-weight="600" fill="#d85a30">θ₁</text>
           <text id="cT2l" x="24" text-anchor="middle" font-size="13" font-weight="600" fill="#d85a30" dominant-baseline="central">θ₂</text>
         </svg>
-        <div class="leg">
+        <div class="leg" id="cLeg">
           <span><span class="sq" style="background:#1d9e75;opacity:.4"></span>Consistent with this person's record</span>
           <span><span class="sw" style="border-color:#9a988f;border-top-style:dashed"></span>Population (prior)</span>
           <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>This person (posterior)</span>
@@ -209,7 +211,6 @@
         </div>
         <div class="line">
           <button class="btn" id="cMCb">Monte Carlo: draw 100 samples</button><button class="btn" id="cMCr">Reset</button>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink)"><input type="checkbox" id="cMCh" style="width:16px;height:16px;accent-color:#d98a1a;cursor:pointer"> Show histograms</label>
           <span id="cMCs" style="font-size:clamp(12px,1vw,15px)"></span>
         </div>
         <div class="post big">
@@ -220,11 +221,12 @@
             <path id="cLikL" fill="none" stroke="#ef9f27" stroke-width="1.6" stroke-dasharray="5 3"/>
             <path id="cPostF" fill="#7f77dd" opacity="0.28"/>
             <path id="cPostL" fill="none" stroke="#534ab7" stroke-width="2.2"/>
+            <path id="cExL" fill="none" stroke="#1f1e1c" stroke-width="1.4" stroke-dasharray="4 3"/>
             <line id="cMeanL" stroke="#534ab7" stroke-width="1.6"/>
             <text id="cMeanT" font-size="12" font-weight="600" fill="#534ab7" text-anchor="middle"></text>
             <text x="250" y="210" text-anchor="middle" font-size="12" fill="#6b6a65">ω<tspan baseline-shift="sub" font-size="9">T</tspan>, genetic liability for the target →</text>
           </svg>
-          <div class="leg" style="justify-content:flex-start;margin:2px 0 4px">
+          <div class="leg" id="cPLeg" style="justify-content:flex-start;margin:2px 0 4px">
             <span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span>
             <span><span class="sw" style="border-color:#ef9f27;border-top-style:dashed"></span>Likelihood of the record, rescaled</span>
             <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior</span>
@@ -841,35 +843,49 @@ function drawCMC(n) {
   }
   if (CMC.pts.length > 4000) CMC.pts = CMC.pts.slice(-4000);
 }
+const C_LEG0 = `<span><span class="sq" style="background:#1d9e75;opacity:.4"></span>Consistent with this person's record</span><span><span class="sw" style="border-color:#9a988f;border-top-style:dashed"></span>Population (prior)</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>This person (posterior)</span>`;
+const C_LEG1 = `<span><span class="dot" style="background:#1d9e75"></span>Kept</span><span><span class="dot" style="background:#b4b2a9"></span>Rejected</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior from your draws</span><span><span class="sw" style="border-color:#1f1e1c;border-top-style:dashed"></span>Exact posterior</span>`;
+const C_PLEG0 = `<span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span><span><span class="sw" style="border-color:#ef9f27;border-top-style:dashed"></span>Likelihood of the record, rescaled</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior</span>`;
+const C_PLEG1 = `<span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior from your draws</span><span><span class="sw" style="border-color:#1f1e1c;border-top-style:dashed"></span>Exact posterior</span>`;
 function renderCMC(P, ex) {
   const sig = JSON.stringify(SC);
   if (sig !== CMC.sig) { const n = CMC.n; CMC = { n: 0, pts: [], k1: [], k2: [], sig }; if (n) drawCMC(n); }
-  const M = M1, x0 = M.x0, y0 = M.y0, x1 = M.x0 + M.size, y1 = M.y0 + M.size;
+  const M = M1;
   let g = '';
   for (const [a, b, ok] of CMC.pts) {
     if (a < -3.5 || a > 3.5 || b < -3.5 || b > 3.5) continue;
-    g += `<circle cx="${M.X(a).toFixed(1)}" cy="${M.Y(b).toFixed(1)}" r="${ok ? 2.6 : 1.5}" fill="${ok ? '#1d9e75' : '#b4b2a9'}" opacity="${ok ? 0.85 : 0.45}"/>`;
-  }
-  const k = CMC.k1.length;
-  if (k > 0 && $('cMCh').checked) {
-    /* histograms of the kept people's liabilities, inside the plot along the bottom (ε₁) and left (ε₂) edges */
-    const NB = 35, bw = 7 / NB, h1 = new Array(NB).fill(0), h2 = new Array(NB).fill(0);
-    CMC.k1.forEach(v => { const i = Math.floor((v + 3.5) / bw); if (i >= 0 && i < NB) h1[i]++; });
-    CMC.k2.forEach(v => { const i = Math.floor((v + 3.5) / bw); if (i >= 0 && i < NB) h2[i]++; });
-    const m1 = Math.max(...h1), m2 = Math.max(...h2), H = 64;
-    h1.forEach((c, i) => { if (c) { const ht = c / m1 * H; g += `<rect x="${(M.X(-3.5 + i * bw) + 0.5).toFixed(1)}" y="${(y1 - ht).toFixed(1)}" width="${(M.size / NB - 1).toFixed(1)}" height="${ht.toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
-    h2.forEach((c, i) => { if (c) { const wd = c / m2 * H; g += `<rect x="${x0}" y="${(M.Y(-3.5 + (i + 1) * bw) + 0.5).toFixed(1)}" width="${wd.toFixed(1)}" height="${(M.size / NB - 1).toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
-  }
-  if (k > 0) {
-    const om = CMC.k1.reduce((t, v, i) => t + P.k1 * v + P.k2 * CMC.k2[i], 0) / k;
-    $('cMCs').innerHTML = `${CMC.n.toLocaleString()} drawn · <span style="color:#0f6e56">${k} match</span> (${(k / CMC.n * 100).toFixed(1)}%) · <b style="color:#b86f0f">MC score ${sgn(om)}</b> vs exact ${sgn(ex.mean)}`;
-  } else {
-    $('cMCs').textContent = CMC.n ? `${CMC.n.toLocaleString()} drawn · none match yet` : '';
+    g += `<circle cx="${M.X(a).toFixed(1)}" cy="${M.Y(b).toFixed(1)}" r="${ok ? 2.6 : 1.6}" fill="${ok ? '#1d9e75' : '#b4b2a9'}" opacity="${ok ? 0.9 : 0.55}"/>`;
   }
   $('cMC').innerHTML = g;
+  const k = CMC.k1.length, on = k > 0;
+  $('cLeg').innerHTML = CMC.n ? C_LEG1 : C_LEG0;
+  $('cPLeg').innerHTML = on ? C_PLEG1 : C_PLEG0;
+  if (!on) {
+    $('cTopEx').setAttribute('d', ''); $('cRightEx').setAttribute('d', ''); $('cExL').setAttribute('d', '');
+    $('cMCs').textContent = CMC.n ? `${CMC.n.toLocaleString()} drawn · none match yet` : '';
+    return;
+  }
+  /* edges: histograms of the kept draws against the exact posterior (dashed), as on the GHK slide */
+  const H = newHist(); for (let i = 0; i < k; i++) addHist(H, CMC.k1[i], CMC.k2[i], 1);
+  const s1 = stepXY(H.a, H.W), s2 = stepXY(H.b, H.W), exM = exactMargins(P);
+  const mx1 = Math.max(...exM.e1, ...s1.ys), mx2 = Math.max(...exM.e2, ...s2.ys);
+  const tp = topPath(s1.xs, s1.ys, mx1), rp = rightPath(s2.xs, s2.ys, mx2);
+  $('cTopPrior').setAttribute('d', ''); $('cRightPrior').setAttribute('d', ''); $('cTopMean').setAttribute('y2', 84);
+  $('cTopPostL').setAttribute('d', tp); $('cTopPostF').setAttribute('d', closeTop(tp));
+  $('cRightPostL').setAttribute('d', rp); $('cRightPostF').setAttribute('d', closeRight(rp));
+  $('cTopEx').setAttribute('d', topPath(EG, exM.e1, mx1)); $('cRightEx').setAttribute('d', rightPath(EG, exM.e2, mx2));
+  /* posterior panel: posterior from the draws (each kept draw adds a small normal curve) against the exact one */
+  const bins = { b: new Float64Array(NB), W: 0, m1: 0, m2: 0 };
+  for (let i = 0; i < k; i++) addBin(bins, P.k1 * CMC.k1[i] + P.k2 * CMC.k2[i], 1);
+  const est = densFromBins(bins, P.v), PRIOR = priorOn(P.h2), ymax = Math.max(...PRIOR, ...ex.dens, ...est) * 1.08;
+  const pr = curve(PRIOR, ymax), es = curve(est, ymax), exc = curve(ex.dens, ymax);
+  $('cPriorF').setAttribute('d', pr.fill); $('cLikL').setAttribute('d', '');
+  $('cPostF').setAttribute('d', es.fill); $('cPostL').setAttribute('d', es.line); $('cExL').setAttribute('d', exc.line);
+  const mean = bins.m1 / bins.W;
+  meanMarker('cMeanL', 'cMeanT', mean);
+  $('cMCs').innerHTML = `${CMC.n.toLocaleString()} drawn · <span style="color:#0f6e56">${k} match</span> (${(k / CMC.n * 100).toFixed(1)}%) · <b style="color:#534ab7">MC score ${sgn(mean)}</b> vs exact ${sgn(ex.mean)}`;
 }
 $('cMCb').onclick = () => { drawCMC(100); renderC(); };
-$('cMCh').onchange = () => renderC();
 $('cMCr').onclick = () => { CMC = { n: 0, pts: [], k1: [], k2: [], sig: CMC.sig }; renderC(); };
 
 /* ================= Slide 3: sampling ================= */

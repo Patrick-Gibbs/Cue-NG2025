@@ -160,7 +160,7 @@
 <!-- ============ Slide 2: exact posterior for one person ============ -->
 <section class="slide" id="two-traits">
   <h1>Extension to multiple traits (visualisation)</h1>
-  <p class="sub">Posterior = prior × likelihood of their diagnoses. Here it is computed exactly, by numerical integration.</p>
+  <p class="sub">Posterior = prior × likelihood of their diagnoses, computed exactly. Monte Carlo shows the brute-force way: simulate people and keep those with this record.</p>
   <div class="stage">
     <div class="ghk">
       <div class="plotcol">
@@ -170,6 +170,7 @@
           <path id="cCont" fill="none" stroke="#c9c7bf" stroke-width="0.8"/>
           <line id="cT1" stroke="#d85a30" stroke-width="1.4" stroke-dasharray="5 4"/>
           <line id="cT2" stroke="#d85a30" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <g id="cMC"></g>
           <line x1="40" y1="84" x2="380" y2="84" stroke="#b9b7ae" stroke-width="1"/>
           <line x1="386" y1="90" x2="386" y2="430" stroke="#b9b7ae" stroke-width="1"/>
           <path id="cTopPrior" fill="none" stroke="#9a988f" stroke-width="1.2" stroke-dasharray="4 3"/>
@@ -204,6 +205,10 @@
           <label class="sl"><span>h²</span> <b id="ch2v"></b><input type="range" id="ch2" data-s="c" data-k="h2" min="0.1" max="0.9" step="0.05" value="0.5"><small>Heritability</small></label>
           <label class="sl"><span>r<sub>g</sub></span> <b id="crgv"></b><input type="range" id="crg" data-s="c" data-k="rg" min="0" max="0.95" step="0.05" value="0.6"><small>Genetic corr.</small></label>
           <label class="sl"><span>r<sub>e</sub></span> <b id="crev"></b><input type="range" id="cre" data-s="c" data-k="re" min="-0.5" max="0.9" step="0.05" value="0.2"><small>Environmental corr.</small></label>
+        </div>
+        <div class="line">
+          <button class="btn" id="cMCb">Monte Carlo: draw 1,000 people</button><button class="btn" id="cMCr">Reset</button>
+          <span id="cMCs" style="font-size:clamp(12px,1vw,15px)"></span>
         </div>
         <div class="post big">
           <h3>Posterior of ω<sub>T</sub> for this person</h3>
@@ -817,7 +822,52 @@ function renderC() {
   $('cP').textContent = ex.Z < 0.001 ? (ex.Z * 100).toFixed(3) + '%' : (ex.Z * 100).toFixed(1) + '%';
   $('cM').textContent = sgn(ex.mean);
   $('cS').textContent = ex.sd.toFixed(2);
+  renderCMC(P, ex);
 }
+
+/* Simple Monte Carlo: draw people from the population, keep those whose diagnoses match the record */
+let CMC = { n: 0, pts: [], k1: [], k2: [], sig: '' };
+function drawCMC(n) {
+  const P = params(SC);
+  for (let i = 0; i < n; i++) {
+    const e1 = randn(), e2 = P.rho * e1 + P.L22 * randn(), ok = e1 > P.a1 && e1 < P.b1 && e2 > P.a2 && e2 < P.b2;
+    CMC.n++; CMC.pts.push([e1, e2, ok]); if (ok) { CMC.k1.push(e1); CMC.k2.push(e2); }
+  }
+  if (CMC.pts.length > 4000) CMC.pts = CMC.pts.slice(-4000);
+}
+function renderCMC(P, ex) {
+  const sig = JSON.stringify(SC);
+  if (sig !== CMC.sig) { const n = CMC.n; CMC = { n: 0, pts: [], k1: [], k2: [], sig }; if (n) drawCMC(n); }
+  const M = M1, x0 = M.x0, y0 = M.y0, x1 = M.x0 + M.size, y1 = M.y0 + M.size;
+  let g = '';
+  for (const [a, b, ok] of CMC.pts) {
+    if (a < -3.5 || a > 3.5 || b < -3.5 || b > 3.5) continue;
+    g += `<circle cx="${M.X(a).toFixed(1)}" cy="${M.Y(b).toFixed(1)}" r="${ok ? 2.6 : 1.5}" fill="${ok ? '#1d9e75' : '#b4b2a9'}" opacity="${ok ? 0.85 : 0.45}"/>`;
+  }
+  const k = CMC.k1.length;
+  if (k > 0) {
+    /* histograms of the kept people's liabilities, inside the plot along the bottom (ε₁) and left (ε₂) edges */
+    const NB = 35, bw = 7 / NB, h1 = new Array(NB).fill(0), h2 = new Array(NB).fill(0);
+    CMC.k1.forEach(v => { const i = Math.floor((v + 3.5) / bw); if (i >= 0 && i < NB) h1[i]++; });
+    CMC.k2.forEach(v => { const i = Math.floor((v + 3.5) / bw); if (i >= 0 && i < NB) h2[i]++; });
+    const m1 = Math.max(...h1), m2 = Math.max(...h2), H = 64;
+    h1.forEach((c, i) => { if (c) { const ht = c / m1 * H; g += `<rect x="${(M.X(-3.5 + i * bw) + 0.5).toFixed(1)}" y="${(y1 - ht).toFixed(1)}" width="${(M.size / NB - 1).toFixed(1)}" height="${ht.toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
+    h2.forEach((c, i) => { if (c) { const wd = c / m2 * H; g += `<rect x="${x0}" y="${(M.Y(-3.5 + (i + 1) * bw) + 0.5).toFixed(1)}" width="${wd.toFixed(1)}" height="${(M.size / NB - 1).toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
+    const mu1 = CMC.k1.reduce((t, v) => t + v, 0) / k, mu2 = CMC.k2.reduce((t, v) => t + v, 0) / k;
+    const mx = M.X(mu1), my = M.Y(mu2);
+    g += `<line x1="${mx}" y1="${y0}" x2="${mx}" y2="${y1}" stroke="#b86f0f" stroke-width="1.6" stroke-dasharray="6 4"/><line x1="${x0}" y1="${my}" x2="${x1}" y2="${my}" stroke="#b86f0f" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+    g += `<circle cx="${mx}" cy="${my}" r="6" fill="#ffffff" stroke="#b86f0f" stroke-width="2.4"/>`;
+    const lx = mx < x0 + 200 ? mx + 10 : mx - 10, anc = mx < x0 + 200 ? 'start' : 'end';
+    g += `<rect x="${anc === 'start' ? lx - 3 : lx - 152}" y="${my - 30}" width="155" height="20" rx="4" fill="#ffffff" fill-opacity="0.85"/><text x="${lx}" y="${my - 15}" text-anchor="${anc}" font-size="12.5" font-weight="600" fill="#b86f0f">MC mean (${fmt(mu1)}, ${fmt(mu2)})</text>`;
+    const om = CMC.k1.reduce((t, v, i) => t + P.k1 * v + P.k2 * CMC.k2[i], 0) / k;
+    $('cMCs').innerHTML = `${CMC.n.toLocaleString()} drawn · <span style="color:#0f6e56">${k} match</span> (${(k / CMC.n * 100).toFixed(1)}%) · <b style="color:#b86f0f">MC score ${sgn(om)}</b> vs exact ${sgn(ex.mean)}`;
+  } else {
+    $('cMCs').textContent = CMC.n ? `${CMC.n.toLocaleString()} drawn · none match yet` : '';
+  }
+  $('cMC').innerHTML = g;
+}
+$('cMCb').onclick = () => { drawCMC(1000); renderC(); };
+$('cMCr').onclick = () => { CMC = { n: 0, pts: [], k1: [], k2: [], sig: CMC.sig }; renderC(); };
 
 /* ================= Slide 3: sampling ================= */
 const SG = { h2: 0.5, rg: 0.6, re: 0.2, th1: 1.65, th2: 1.05, z1: 0, z2: 1, mode: 'ghk' };

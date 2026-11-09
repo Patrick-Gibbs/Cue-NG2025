@@ -360,7 +360,6 @@
           <span><span class="sq" style="background:#1d9e75;opacity:.4"></span>Consistent with this person's record</span>
           <span><span class="sw" style="border-color:#9a988f;border-top-style:dashed"></span>Population (prior)</span>
           <span><span class="sq" style="background:#7f77dd;opacity:.6"></span>This person (posterior)</span>
-          <span><span class="sw" style="border-color:#ef9f27"></span>GHK step for the last draw</span>
         </div>
       </div>
 
@@ -967,19 +966,7 @@ function renderG() {
     a2.forEach((c, i) => { if (c) { const wd = c / m2 * Hh; h += `<rect x="${M.x0}" y="${(M.Y(-3.5 + (i + 1) * bw) + 0.5).toFixed(1)}" width="${wd.toFixed(1)}" height="${(M.size / NBh - 1).toFixed(1)}" fill="#d98a1a" fill-opacity="0.55"/>`; } });
   }
   $('gMC').innerHTML = h;
-  let c = '';
-  if (last) {
-    const x0 = X(last.e1), mu = P2.rho * last.e1, lo = cl(P2.a2), hi = cl(P2.b2);
-    let cv = '', fill = 'M' + x0 + ' ' + Y(lo).toFixed(1);
-    for (let e = -3.5; e <= 3.5001; e += 0.05) {
-      const x = x0 + 45 * Math.exp(-Math.pow((e - mu) / P2.L22, 2) / 2);
-      cv += (cv ? 'L' : 'M') + x.toFixed(1) + ' ' + Y(e).toFixed(1);
-      if (e >= lo && e <= hi) fill += 'L' + x.toFixed(1) + ' ' + Y(e).toFixed(1);
-    }
-    fill += 'L' + x0 + ' ' + Y(hi).toFixed(1) + 'Z';
-    c = `<line x1="${x0}" y1="${M.y0}" x2="${x0}" y2="${y1}" stroke="#ef9f27" stroke-width="1" stroke-dasharray="3 3"/><path d="${fill}" fill="#ef9f27" opacity="0.3"/><path d="${cv}" fill="none" stroke="#ef9f27" stroke-width="1.2"/><circle cx="${x0}" cy="${Y(last.e2).toFixed(1)}" r="6.5" fill="none" stroke="#ba7517" stroke-width="1.6"/>`;
-  }
-  $('cons').innerHTML = c;
+  $('cons').innerHTML = '';
 
   /* posterior panel: exact posterior, plus the estimate from the samples in gold */
   const est = density(st.bins), mom = moments(st.bins), PRIOR = priorOn(P2.h2);

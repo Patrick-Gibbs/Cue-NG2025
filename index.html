@@ -442,10 +442,13 @@
         <div class="line">
           <span class="k">This person is a</span>
           <span class="seg" data-s="y" data-k="z"><button data-v="0">Control</button><button data-v="1">Case</button></span>
-          <span style="margin-left:8px">Target: h² = 0.5, prevalence 10%</span>
+          <span style="margin-left:8px">Target h² = 0.5</span>
+          <span class="k" style="margin-left:auto">Joint shown as</span>
+          <span class="seg" data-s="y" data-k="view"><button data-v="rings">Rings</button><button data-v="points">Points</button></span>
         </div>
         <div class="sliders">
-          <label class="sl" style="grid-column: span 2"><span>Their lab value</span> <b id="yYv"></b><input type="range" data-s="y" data-k="y" min="-3" max="3" step="0.1" value="2"><small>SD from the population mean</small></label>
+          <label class="sl th"><span>θ, target</span> <b id="yThv"></b><input type="range" data-s="y" data-k="th" min="-1" max="3" step="0.05" value="1.3"><small id="yKv"></small></label>
+          <label class="sl"><span>Lab value</span> <b id="yYv"></b><input type="range" data-s="y" data-k="y" min="-3" max="3" step="0.1" value="2"><small>SD from the mean</small></label>
           <label class="sl"><span>Lab h²</span> <b id="yH2v"></b><input type="range" data-s="y" data-k="h2y" min="0.1" max="0.9" step="0.05" value="0.6"><small>Heritability</small></label>
           <label class="sl"><span>r<sub>g</sub></span> <b id="yRgv"></b><input type="range" data-s="y" data-k="rg" min="-0.9" max="0.9" step="0.05" value="0.7"><small>Genetic corr.</small></label>
           <label class="sl"><span>r<sub>e</sub></span> <b id="yRev"></b><input type="range" data-s="y" data-k="re" min="-0.5" max="0.9" step="0.05" value="0.2"><small>Environmental corr.</small></label>
@@ -1079,11 +1082,12 @@ function renderQ() {
 }
 
 /* ================= Slide 5: lab value ================= */
-const SY = { z: 1, y: 2, h2y: 0.6, rg: 0.7, re: 0.2, mode: 'exact' };
+const SY = { z: 1, y: 2, h2y: 0.6, rg: 0.7, re: 0.2, th: 1.3, view: 'rings', mode: 'exact' };
+const YPOP = (() => { const g = mulberry32(7), out = []; for (let i = 0; i < 700; i++) { const a = Math.sqrt(-2 * Math.log(1 - g())), b = 2 * Math.PI * g(); out.push([a * Math.cos(b), a * Math.sin(b)]); } return out; })();
 let YD = { n: 0, kept: 0, pts: [], bins: null, sig: '' };
 const YWIN = 0.1;
 function labGeom() {
-  const h2 = 0.5, th = invPhi(0.9), cwy = SY.rg * Math.sqrt(h2 * SY.h2y);
+  const h2 = 0.5, th = SY.th, cwy = SY.rg * Math.sqrt(h2 * SY.h2y);
   const rho = cwy + SY.re * Math.sqrt((1 - h2) * (1 - SY.h2y)), sr = Math.sqrt(Math.max(1e-6, 1 - rho * rho));
   /* ω_T | ε_T, y is normal: regression coefficients and residual variance */
   const a1 = (h2 - rho * cwy) / (1 - rho * rho), a2 = (cwy - rho * h2) / (1 - rho * rho), v = Math.max(1e-6, h2 - (a1 * h2 + a2 * cwy));
@@ -1108,7 +1112,7 @@ function drawY(n) {
 }
 $('yAxis').innerHTML = axisSvg();
 function labPosterior(z, yv, useY) {
-  const h2 = 0.5, th = invPhi(0.9), P = SY;
+  const h2 = 0.5, th = SY.th, P = SY;
   const cwy = P.rg * Math.sqrt(h2 * P.h2y), csy = P.re * Math.sqrt((1 - h2) * (1 - P.h2y));
   const a = cwy / h2, vy = Math.max(1e-4, 1 - cwy * cwy / h2), bb = csy / vy, vs = Math.max(1e-4, (1 - h2) - csy * csy / vy);
   const f = w => {
@@ -1123,13 +1127,14 @@ function labPosterior(z, yv, useY) {
   return { mean, sd, f, Z: Z * dw };
 }
 function renderY() {
-  const sig = [SY.z, SY.y, SY.h2y, SY.rg, SY.re, SY.mode].join('|');
+  const sig = [SY.z, SY.y, SY.h2y, SY.rg, SY.re, SY.th, SY.mode].join('|');
   if (sig !== YD.sig) { const n = YD.n; YD = { n: 0, kept: 0, pts: [], bins: null, sig }; if (n) drawY(n); }
+  $('yThv').textContent = SY.th.toFixed(2); $('yKv').textContent = 'Prevalence ' + (100 * (1 - Phi(SY.th))).toFixed(1) + '%';
   $('yYv').textContent = fmt(SY.y); $('yH2v').textContent = SY.h2y.toFixed(2);
   $('yRgv').textContent = fmt(SY.rg); $('yRev').textContent = fmt(SY.re);
   /* left: target liability ε_T (x) against lab value y (y). Both have variance 1; their covariance is
      ρ = r_g √(h² h²_y) + r_e √((1−h²)(1−h²_y)), so ε_T | y ~ N(ρ y, 1 − ρ²) and P(case | y) = 1 − Φ((θ − ρ y)/√(1 − ρ²)). */
-  const th = invPhi(0.9);
+  const th = SY.th;
   const rho = SY.rg * Math.sqrt(0.5 * SY.h2y) + SY.re * Math.sqrt(0.5 * (1 - SY.h2y)), sr = Math.sqrt(Math.max(1e-6, 1 - rho * rho));
   const PX0L = 40, PX1L = 440, PY0 = 50, PY1 = 430;
   const LXp = e => PX0L + (cl(e) + 3.5) / 7 * (PX1L - PX0L), LYp = v => PY1 - (cl(v) + 3.5) / 7 * (PY1 - PY0);
@@ -1137,9 +1142,13 @@ function renderY() {
   let h = `<rect x="${PX0L}" y="${PY0}" width="${PX1L - PX0L}" height="${PY1 - PY0}" fill="#ffffff" stroke="#dedcd4"/>`;
   h += `<rect x="${LXp(lo)}" y="${PY0}" width="${Math.max(0, LXp(hi) - LXp(lo))}" height="${PY1 - PY0}" fill="#1d9e75" opacity="0.1"/>`;
   /* joint distribution of (ε_T, lab value) in the population: rings at 1, 2 and 3 SD */
-  let d = '';
-  [1, 2, 3].forEach(r => { for (let i = 0; i <= 72; i++) { const t = i / 72 * 2 * Math.PI, u1 = r * Math.cos(t), u2 = r * Math.sin(t); d += (i ? 'L' : 'M') + LXp(u1).toFixed(1) + ' ' + LYp(rho * u1 + sr * u2).toFixed(1); } });
-  h += `<path d="${d}" fill="none" stroke="#a8a69e" stroke-width="1.1"/>`;
+  if (SY.view === 'points') {
+    for (const [u1, u2] of YPOP) { const v = rho * u1 + sr * u2; if (Math.abs(u1) < 3.5 && Math.abs(v) < 3.5) h += `<circle cx="${LXp(u1).toFixed(1)}" cy="${LYp(v).toFixed(1)}" r="2" fill="#9a988f" opacity="0.5"/>`; }
+  } else {
+    let d = '';
+    [1, 2, 3].forEach(r => { for (let i = 0; i <= 72; i++) { const t = i / 72 * 2 * Math.PI, u1 = r * Math.cos(t), u2 = r * Math.sin(t); d += (i ? 'L' : 'M') + LXp(u1).toFixed(1) + ' ' + LYp(rho * u1 + sr * u2).toFixed(1); } });
+    h += `<path d="${d}" fill="none" stroke="#a8a69e" stroke-width="1.1"/>`;
+  }
   /* slice of the joint at this person's lab value, cut at θ: their liability given both pieces of information */
   const slice = EG.map(e => (SY.z ? e > th : e < th) ? phi((e - rho * SY.y) / sr) : 0), smax = Math.max(...slice) || 1;
   let sl = EG.map((e, i) => (i ? 'L' : 'M') + LXp(e).toFixed(1) + ' ' + (yy - slice[i] / smax * 46).toFixed(1)).join('');
@@ -1331,7 +1340,7 @@ const STATE = { t: ST, c: SC, g: SG, q: SQ, y: SY, e: SE, f: SF }, RENDER = { t:
 document.querySelectorAll('.seg').forEach(sg => {
   const S = STATE[sg.dataset.s], k = sg.dataset.k;
   sg.querySelectorAll('button').forEach(b => {
-    const v = k === 'mode' ? b.dataset.v : +b.dataset.v;
+    const v = (k === 'mode' || k === 'view') ? b.dataset.v : +b.dataset.v;
     b.classList.toggle('on', S[k] === v);
     b.addEventListener('click', () => { S[k] = v; sg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); RENDER[sg.dataset.s](); });
   });

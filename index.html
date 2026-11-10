@@ -165,6 +165,7 @@
         <svg viewBox="0 0 470 480" role="img" aria-label="The two liabilities, with the region matching this person's diagnoses shaded, and the posterior of each liability drawn along its axis">
           <rect x="40" y="90" width="340" height="340" fill="#ffffff" stroke="#dedcd4" stroke-width="1"/>
           <rect id="cRegion" fill="#1d9e75" opacity="0.14" stroke="#1d9e75" stroke-width="1"/>
+          <g id="cLik"></g>
           <path id="cCont" fill="none" stroke="#c9c7bf" stroke-width="0.8"/>
           <line id="cT1" stroke="#d85a30" stroke-width="1.4" stroke-dasharray="5 4"/>
           <line id="cT2" stroke="#d85a30" stroke-width="1.4" stroke-dasharray="5 4"/>
@@ -180,8 +181,8 @@
           <path id="cRightPostF" fill="#7f77dd" opacity="0.3"/>
           <path id="cRightPostL" fill="none" stroke="#534ab7" stroke-width="1.8"/>
           <path id="cRightEx" fill="none" stroke="#1f1e1c" stroke-width="1.3" stroke-dasharray="4 3"/>
-          <text x="210" y="472" text-anchor="middle" font-size="13" fill="#6b6a65">ε₁, total liability for the target →</text>
-          <text x="392" y="40" font-size="13" fill="#6b6a65">↑ ε₂, total</text>
+          <text id="cXlab" x="210" y="472" text-anchor="middle" font-size="13" fill="#6b6a65">ε₁, total liability for the target →</text>
+          <text id="cYlab" x="392" y="40" font-size="13" fill="#6b6a65">↑ ε₂, total</text>
           <text x="392" y="56" font-size="13" fill="#6b6a65">liability for</text>
           <text x="392" y="72" font-size="13" fill="#6b6a65">other trait</text>
           <text id="cT1l" y="448" text-anchor="middle" font-size="13" font-weight="600" fill="#d85a30">θ₁</text>
@@ -209,6 +210,9 @@
         </div>
         <div class="line">
           <button class="btn" id="cMCb">Monte Carlo: draw 100 samples</button><button class="btn" id="cMCr">Reset</button>
+          <span class="k" style="margin-left:auto">Axes</span><span class="seg" data-s="c" data-k="ax"><button data-v="eps">Total ε</button><button data-v="omega">Genetic ω</button></span>
+        </div>
+        <div class="line" style="margin-top:-4px;min-height:1.3em">
           <span id="cMCs" style="font-size:clamp(12px,1vw,15px)"></span>
         </div>
         <div class="post big">
@@ -879,13 +883,17 @@ function renderT() {
 }
 
 /* ================= Slide 2: exact ================= */
-const SC = { h2: 0.5, rg: 0.6, re: 0.2, th1: 1.65, th2: 1.05, z1: 0, z2: 1 };
+const SC = { h2: 0.5, rg: 0.6, re: 0.2, th1: 1.65, th2: 1.05, z1: 0, z2: 1, ax: 'eps' };
 $('cAxis').innerHTML = axisSvg();
 function renderC() {
   sliderLabels(SC, 'c');
-  const P = params(SC);
-  drawPlane(P, SC, { region: 'cRegion', cont: 'cCont', t1: 'cT1', t2: 'cT2', t1l: 'cT1l', t2l: 'cT2l' }, M1);
-  drawMargins(P);
+  const P = params(SC), om = SC.ax === 'omega';
+  ['cRegion', 'cT1', 'cT2', 'cT1l', 'cT2l'].forEach(id => $(id).style.display = om ? 'none' : '');
+  $('cXlab').textContent = om ? 'ω₁, genetic liability for the target →' : 'ε₁, total liability for the target →';
+  $('cYlab').textContent = om ? '↑ ω₂, genetic' : '↑ ε₂, total';
+  let OM = null;
+  if (!om) { drawPlane(P, SC, { region: 'cRegion', cont: 'cCont', t1: 'cT1', t2: 'cT2', t1l: 'cT1l', t2l: 'cT2l' }, M1); drawMargins(P); $('cLik').innerHTML = ''; }
+  else { OM = omegaMargins(P); drawOmegaPlane(P); drawOmegaMargins(OM); }
   const ex = exactPost(P, GRID), PRIOR = priorOn(P.h2);
   const ymax = Math.max(...PRIOR, ...ex.dens) * 1.08;
   const lmax = Math.max(...ex.lik) || 1;
@@ -897,35 +905,82 @@ function renderC() {
   $('cP').textContent = ex.Z < 0.001 ? (ex.Z * 100).toFixed(3) + '%' : (ex.Z * 100).toFixed(1) + '%';
   $('cM').textContent = sgn(ex.mean);
   $('cS').textContent = ex.sd.toFixed(2);
-  renderCMC(P, ex);
+  renderCMC(P, ex, OM);
+}
+
+/* Genetic view: axes are the genetic liabilities (ω₁, ω₂) ~ N(0, Ω). The record is a box on ε = ω + σ, so in ω space it becomes
+   a soft region: P(record | ω₁, ω₂) = P(a₁ < ω₁ + σ₁ < b₁, a₂ < ω₂ + σ₂ < b₂), with σ ~ N(0, (1 − h²)[[1, r_e], [r_e, 1]]) */
+function recordGivenOmega(P, w1, w2) {
+  const s = Math.sqrt(1 - P.h2), cv = s * Math.sqrt(1 - P.re * P.re);
+  const lo = Math.max(P.a1 - w1, -6 * s), hi = Math.min(P.b1 - w1, 6 * s);
+  if (hi <= lo) return 0;
+  const n = 40, dx = (hi - lo) / n; let t = 0;
+  for (let i = 0; i <= n; i++) {
+    const s1 = lo + i * dx, mu = w2 + P.re * s1;
+    const v = phi(s1 / s) / s * (Phi((P.b2 - mu) / cv) - Phi((P.a2 - mu) / cv));
+    t += (i === 0 || i === n) ? v / 2 : v;
+  }
+  return t * dx;
+}
+function drawOmegaPlane(P) {
+  const h = Math.sqrt(P.h2), sg = Math.sqrt(1 - P.rg * P.rg);
+  let d = '';
+  [1, 2, 3].forEach(r => { for (let i = 0; i <= 72; i++) { const t = i / 72 * 2 * Math.PI, x = h * r * Math.cos(t), y = h * (P.rg * r * Math.cos(t) + sg * r * Math.sin(t)); d += (i ? 'L' : 'M') + M1.X(x).toFixed(1) + ' ' + M1.Y(y).toFixed(1); } });
+  $('cCont').setAttribute('d', d);
+  const n = 35, cw = 7 / n, pw = M1.size / n, L = [];
+  let mx = 0;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const v = recordGivenOmega(P, -3.5 + (i + 0.5) * cw, -3.5 + (j + 0.5) * cw); L.push([i, j, v]); if (v > mx) mx = v; }
+  let g = '';
+  for (const [i, j, v] of L) { const o = v / (mx || 1); if (o > 0.02) g += `<rect x="${(M1.x0 + i * pw).toFixed(1)}" y="${(M1.y0 + M1.size - (j + 1) * pw).toFixed(1)}" width="${(pw + 0.3).toFixed(1)}" height="${(pw + 0.3).toFixed(1)}" fill="#1d9e75" opacity="${(0.5 * o).toFixed(3)}"/>`; }
+  $('cLik').innerHTML = g;
+}
+/* exact posteriors of ω₁ and ω₂ given the record (ω₂ by swapping the traits' roles) */
+function omegaMargins(P) {
+  const d1 = exactPost(P, EG), d2 = exactPost(params({ ...SC, z1: SC.z2, z2: SC.z1, th1: SC.th2, th2: SC.th1 }), EG);
+  const h = Math.sqrt(P.h2);
+  return { w1: d1.dens, w2: d2.dens, m1: d1.mean, pr: EG.map(w => phi(w / h) / h) };
+}
+function drawOmegaMargins(OM) {
+  const m1 = Math.max(...OM.w1, ...OM.pr), m2 = Math.max(...OM.w2, ...OM.pr);
+  const t1 = topPath(EG, OM.w1, m1), r2 = rightPath(EG, OM.w2, m2);
+  $('cTopPrior').setAttribute('d', topPath(EG, OM.pr, m1)); $('cRightPrior').setAttribute('d', rightPath(EG, OM.pr, m2));
+  $('cTopPostL').setAttribute('d', t1); $('cTopPostF').setAttribute('d', closeTop(t1));
+  $('cRightPostL').setAttribute('d', r2); $('cRightPostF').setAttribute('d', closeRight(r2));
+  const iMu = Math.max(0, Math.min(EG.length - 1, Math.round((OM.m1 + 3.5) / 0.025)));
+  Object.entries({ x1: M1.X(OM.m1), x2: M1.X(OM.m1), y1: 84, y2: 84 - OM.w1[iMu] / m1 * MH }).forEach(([k, v]) => $('cTopMean').setAttribute(k, v));
 }
 
 /* Simple Monte Carlo: draw people from the population, keep those whose diagnoses match the record */
-let CMC = { n: 0, pts: [], k1: [], k2: [], sig: '' };
+let CMC = { n: 0, pts: [], k1: [], k2: [], w1: [], w2: [], sig: '' };
 function drawCMC(n) {
-  const P = params(SC);
+  const P = params(SC), h = Math.sqrt(P.h2), s = Math.sqrt(1 - P.h2);
   for (let i = 0; i < n; i++) {
-    const e1 = randn(), e2 = P.rho * e1 + P.L22 * randn(), ok = e1 > P.a1 && e1 < P.b1 && e2 > P.a2 && e2 < P.b2;
-    CMC.n++; CMC.pts.push([e1, e2, ok]); if (ok) { CMC.k1.push(e1); CMC.k2.push(e2); }
+    const z1 = randn(), z3 = randn();
+    const w1 = h * z1, w2 = h * (P.rg * z1 + Math.sqrt(1 - P.rg * P.rg) * randn());
+    const e1 = w1 + s * z3, e2 = w2 + s * (P.re * z3 + Math.sqrt(1 - P.re * P.re) * randn());
+    const ok = e1 > P.a1 && e1 < P.b1 && e2 > P.a2 && e2 < P.b2;
+    CMC.n++; CMC.pts.push([e1, e2, ok, w1, w2]); if (ok) { CMC.k1.push(e1); CMC.k2.push(e2); CMC.w1.push(w1); CMC.w2.push(w2); }
   }
   if (CMC.pts.length > 4000) CMC.pts = CMC.pts.slice(-4000);
 }
 const C_LEG0 = `<span><span class="sq" style="background:#1d9e75;opacity:.4"></span>Consistent with this person's record</span><span><span class="sw" style="border-color:#9a988f;border-top-style:dashed"></span>Population (prior)</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>This person (posterior)</span>`;
+const C_LEG0W = `<span><span class="sq" style="background:#1d9e75;opacity:.4"></span>Chance of this record, given genetics (darker = higher)</span><span><span class="sw" style="border-color:#9a988f;border-top-style:dashed"></span>Population (prior)</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>This person (posterior)</span>`;
 const C_LEG1 = `<span><span class="dot" style="background:#1d9e75"></span>Kept</span><span><span class="dot" style="background:#b4b2a9"></span>Rejected</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior from your draws</span><span><span class="sw" style="border-color:#1f1e1c;border-top-style:dashed"></span>Exact posterior</span>`;
 const C_PLEG0 = `<span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span><span><span class="sw" style="border-color:#ef9f27;border-top-style:dashed"></span>Likelihood of the record, rescaled</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior</span>`;
 const C_PLEG1 = `<span><span class="sq" style="background:#b4b2a9;opacity:.6"></span>Prior, N(0, h²)</span><span><span class="sq" style="background:#7f77dd;opacity:.6"></span>Posterior from your draws</span><span><span class="sw" style="border-color:#1f1e1c;border-top-style:dashed"></span>Exact posterior</span>`;
-function renderCMC(P, ex) {
-  const sig = JSON.stringify(SC);
-  if (sig !== CMC.sig) { const n = CMC.n; CMC = { n: 0, pts: [], k1: [], k2: [], sig }; if (n) drawCMC(n); }
+function renderCMC(P, ex, OM) {
+  const sig = JSON.stringify({ ...SC, ax: 0 }), om = !!OM;
+  if (sig !== CMC.sig) { const n = CMC.n; CMC = { n: 0, pts: [], k1: [], k2: [], w1: [], w2: [], sig }; if (n) drawCMC(n); }
   const M = M1;
   let g = '';
-  for (const [a, b, ok] of CMC.pts) {
+  for (const [e1, e2, ok, w1, w2] of CMC.pts) {
+    const a = om ? w1 : e1, b = om ? w2 : e2;
     if (a < -3.5 || a > 3.5 || b < -3.5 || b > 3.5) continue;
     g += `<circle cx="${M.X(a).toFixed(1)}" cy="${M.Y(b).toFixed(1)}" r="${ok ? 2.6 : 1.6}" fill="${ok ? '#1d9e75' : '#b4b2a9'}" opacity="${ok ? 0.9 : 0.55}"/>`;
   }
   $('cMC').innerHTML = g;
   const k = CMC.k1.length, on = k > 0;
-  $('cLeg').innerHTML = CMC.n ? C_LEG1 : C_LEG0;
+  $('cLeg').innerHTML = CMC.n ? C_LEG1 : (om ? C_LEG0W : C_LEG0);
   $('cPLeg').innerHTML = on ? C_PLEG1 : C_PLEG0;
   if (!on) {
     $('cTopEx').setAttribute('d', ''); $('cRightEx').setAttribute('d', ''); $('cExL').setAttribute('d', '');
@@ -933,8 +988,8 @@ function renderCMC(P, ex) {
     return;
   }
   /* edges: histograms of the kept draws against the exact posterior (dashed), as on the GHK slide */
-  const H = newHist(); for (let i = 0; i < k; i++) addHist(H, CMC.k1[i], CMC.k2[i], 1);
-  const s1 = stepXY(H.a, H.W), s2 = stepXY(H.b, H.W), exM = exactMargins(P);
+  const H = newHist(); for (let i = 0; i < k; i++) addHist(H, om ? CMC.w1[i] : CMC.k1[i], om ? CMC.w2[i] : CMC.k2[i], 1);
+  const s1 = stepXY(H.a, H.W), s2 = stepXY(H.b, H.W), exM = om ? { e1: OM.w1, e2: OM.w2 } : exactMargins(P);
   const mx1 = Math.max(...exM.e1, ...s1.ys), mx2 = Math.max(...exM.e2, ...s2.ys);
   const tp = topPath(s1.xs, s1.ys, mx1), rp = rightPath(s2.xs, s2.ys, mx2);
   $('cTopPrior').setAttribute('d', ''); $('cRightPrior').setAttribute('d', ''); $('cTopMean').setAttribute('y2', 84);
@@ -953,7 +1008,7 @@ function renderCMC(P, ex) {
   $('cMCs').innerHTML = `${CMC.n.toLocaleString()} drawn · <span style="color:#0f6e56">${k} match</span> (${(k / CMC.n * 100).toFixed(1)}%) · <b style="color:#534ab7">MC score ${sgn(mean)}</b> vs exact ${sgn(ex.mean)}`;
 }
 $('cMCb').onclick = () => { drawCMC(100); renderC(); };
-$('cMCr').onclick = () => { CMC = { n: 0, pts: [], k1: [], k2: [], sig: CMC.sig }; renderC(); };
+$('cMCr').onclick = () => { CMC = { n: 0, pts: [], k1: [], k2: [], w1: [], w2: [], sig: CMC.sig }; renderC(); };
 
 /* ================= Slide 3: sampling ================= */
 const SG = { h2: 0.5, rg: 0.6, re: 0.2, th1: 1.65, th2: 1.05, z1: 0, z2: 1, mode: 'ghk' };
@@ -1490,7 +1545,7 @@ const STATE = { t: ST, c: SC, g: SG, q: SQ, y: SY, e: SE, f: SF, w: SW }, RENDER
 document.querySelectorAll('.seg').forEach(sg => {
   const S = STATE[sg.dataset.s], k = sg.dataset.k;
   sg.querySelectorAll('button').forEach(b => {
-    const v = (k === 'mode' || k === 'view') ? b.dataset.v : +b.dataset.v;
+    const v = (k === 'mode' || k === 'view' || k === 'ax') ? b.dataset.v : +b.dataset.v;
     b.classList.toggle('on', S[k] === v);
     b.addEventListener('click', () => { S[k] = v; sg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); RENDER[sg.dataset.s](); });
   });
